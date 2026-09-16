@@ -2,7 +2,7 @@ namespace FinalsWeek.Core;
 
 public interface IDeckStore
 {
-    void Add(Deck Deck);
+    void Add(Deck deck);
 
     IReadOnlyList<Deck> GetAll();
     

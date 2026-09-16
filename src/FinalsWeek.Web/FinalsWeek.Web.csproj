@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FinalsWeek.Application\FinalsWeek.Application.csproj" />
+    <ProjectReference Include="..\FinalsWeek.Core\FinalsWeek.Core.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

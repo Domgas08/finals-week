@@ -1,9 +1,6 @@
-using FinalsWeek.Core
+using FinalsWeek.Application;
+using FinalsWeek.Core;
 
-var builder = WebApplication.CreateBuilder(args);
+// Line for Dependency Inversion left for further development
 
-builder.Services.AddSingleton<IDeckStore, InMemoryDeckStore>();
-
-var app = builder.Build();
-
-app.Run();
+// builder.Services.AddSingleton<IDeckStore, InMemoryDeckStore>();
