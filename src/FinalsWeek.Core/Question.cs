@@ -67,9 +67,9 @@ public record Question
 
     private static int ValidateTimeLimit(int timeLimitSeconds)
     {
-        if (timeLimitSeconds < 0)
+        if (timeLimitSeconds < 5)
         {
-            throw new ArgumentException("Time limit must be non-negative");
+            throw new ArgumentOutOfRangeException(nameof(timeLimitSeconds), "Time limit must be at least 5 seconds");
         }
 
         return timeLimitSeconds;
@@ -88,7 +88,7 @@ public record Question
         }
 
         ValidateOptionsListContents(options);
-        return options.ToArray();
+        return options.ToList().AsReadOnly();
     }
 
     private static void ValidateOptionsListContents(IReadOnlyList<string> options)
@@ -106,7 +106,7 @@ public record Question
     {
         if (correctIndex < 0 || correctIndex >= options.Count)
         {
-            throw new ArgumentException("Correct index must be within the range of the options list");
+            throw new ArgumentOutOfRangeException(nameof(correctIndex), "Correct index must be within the range of the options list");
         }
 
         return correctIndex;
