@@ -1,5 +1,7 @@
 namespace FinalsWeek.Core.Tests;
 
+using FinalsWeek.Core;
+
 using Xunit;
 
 public class DeckTests
@@ -21,5 +23,13 @@ public class DeckTests
     public void Constructor_WithTitleOver120Chars_ThrowsArgumentException()
     {
         Assert.Throws<ArgumentException>(() => new Deck(new string('a', 121)));
+    }
+
+    [Fact]
+    public void Constructor_WithNewTitle_RenamesDeck()
+    {
+        var deck = new Deck("Old Title");
+        deck.Rename("New Title");
+        Assert.Equal("New Title", deck.Title);
     }
 }
