@@ -8,14 +8,6 @@ public enum Visibility
 
 public class Deck
 {
-    public string Title { get; private set; }
-
-    public string? CourseCode { get; set; }
-
-    public string? Description { get; set; }
-
-    public Visibility Visibility { get; set; }
-
     public Deck(string title, string? courseCode = null, string? description = null, Visibility visibility = Visibility.Private)
     {
         this.Title = ValidateTitle(title);
@@ -23,6 +15,14 @@ public class Deck
         this.Description = description;
         this.Visibility = visibility;
     }
+
+    public string Title { get; private set; }
+
+    public string? CourseCode { get; set; }
+
+    public string? Description { get; set; }
+
+    public Visibility Visibility { get; set; }
 
     public void Rename(string newTitle)
     {
