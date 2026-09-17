@@ -1,5 +1,6 @@
 namespace FinalsWeek.Core.Tests;
 
+using FinalsWeek.Application;
 using FinalsWeek.Core;
 
 using Xunit;
@@ -26,7 +27,7 @@ public class DeckTests
     }
 
     [Fact]
-    public void Constructor_WithNewTitle_RenamesDeck()
+    public void Rename_WithNewTitle_RenamesDeck()
     {
         var deck = new Deck("Old Title");
         deck.Rename("New Title");
