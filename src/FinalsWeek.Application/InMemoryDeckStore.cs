@@ -20,4 +20,9 @@ public class InMemoryDeckStore : IDeckStore
     {
         return decks.ToList().AsReadOnly();
     }
+
+    public Deck? GetById(Guid id)
+    {
+        return decks.FirstOrDefault(d => d.Id == id);
+    }
 }

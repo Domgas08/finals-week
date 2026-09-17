@@ -7,4 +7,6 @@ public interface IDeckStore
     void Add(Deck deck);
 
     IReadOnlyList<Deck> GetAll();
+
+    Deck? GetById(Guid id);
 }
