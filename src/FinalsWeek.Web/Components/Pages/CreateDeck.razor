@@ -1,0 +1,70 @@
+@page "/decks/create"
+@rendermode InteractiveServer
+
+@using System.ComponentModel.DataAnnotations
+@using FinalsWeek.Core
+@using FinalsWeek.Application
+
+@inject IDeckStore DeckStore
+
+<h1>Create deck</h1>
+
+<EditForm Model="@form" OnValidSubmit="@SubmitForm">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label class="form-label">Title</label>
+        <InputText class="form-control" @bind-Value="form.Title" />
+        <ValidationMessage For="@(() => form.Title)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Course code</label>
+        <InputText class="form-control" @bind-Value="form.CourseCode" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Description</label>
+        <InputTextArea class="form-control" @bind-Value="form.Description" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Visibility</label>
+        <InputSelect class="form-select" @bind-Value="form.Visibility">
+            <option value="@Visibility.Private">Private</option>
+            <option value="@Visibility.Public">Public</option>
+        </InputSelect>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+</EditForm>
+
+@code {
+    private CreateDeckForm form = new();
+
+    private void SubmitForm()
+    {
+        var deck = new Deck(
+            form.Title,
+            form.CourseCode,
+            form.Description,
+            form.Visibility);
+
+        DeckStore.Add(deck);
+
+        form = new CreateDeckForm();
+    }
+
+    private class CreateDeckForm
+    {
+        [Required(ErrorMessage = "Title is required")]
+        [StringLength(120, ErrorMessage = "Title cannot be longer than 120 characters")]
+        public string Title { get; set; } = string.Empty;
+
+        public string? CourseCode { get; set; }
+
+        public string? Description { get; set; }
+
+        public Visibility Visibility { get; set; } = Visibility.Private;
+    }
+}
