@@ -1,21 +1,23 @@
 @page "/decks/create"
 @rendermode InteractiveServer
 
-@using System.ComponentModel.DataAnnotations
 @using FinalsWeek.Core
 @using FinalsWeek.Application
 
 @inject IDeckStore DeckStore
+@inject NavigationManager Navigation
 
 <h1>Create deck</h1>
 
-<EditForm Model="@form" OnValidSubmit="@SubmitForm">
-    <DataAnnotationsValidator />
-
+<EditForm Model="@form" OnSubmit="@SubmitForm">
     <div class="mb-3">
         <label class="form-label">Title</label>
         <InputText class="form-control" @bind-Value="form.Title" />
-        <ValidationMessage For="@(() => form.Title)" />
+
+        @if (error is not null)
+        {
+            <div class="text-danger">@error</div>
+        }
     </div>
 
     <div class="mb-3">
@@ -41,24 +43,34 @@
 
 @code {
     private CreateDeckForm form = new();
+    private string? error;
 
     private void SubmitForm()
     {
-        var deck = new Deck(
-            form.Title,
-            form.CourseCode,
-            form.Description,
-            form.Visibility);
+        error = null;
 
-        DeckStore.Add(deck);
+        try
+        {
+            var deck = new Deck(
+                form.Title,
+                courseCode: string.IsNullOrWhiteSpace(form.CourseCode)
+                    ? null
+                    : form.CourseCode.Trim(),
+                description: form.Description,
+                visibility: form.Visibility);
 
-        form = new CreateDeckForm();
+            DeckStore.Add(deck);
+
+            Navigation.NavigateTo("/decks");
+        }
+        catch (ArgumentException ex)
+        {
+            error = ex.Message;
+        }
     }
 
     private class CreateDeckForm
     {
-        [Required(ErrorMessage = "Title is required")]
-        [StringLength(120, ErrorMessage = "Title cannot be longer than 120 characters")]
         public string Title { get; set; } = string.Empty;
 
         public string? CourseCode { get; set; }
