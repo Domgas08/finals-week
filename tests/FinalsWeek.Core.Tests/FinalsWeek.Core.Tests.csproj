@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FinalsWeek.Core\FinalsWeek.Core.csproj" />
+    <ProjectReference Include="..\..\src\FinalsWeek.Application\FinalsWeek.Application.csproj" />
   </ItemGroup>
 
 </Project>

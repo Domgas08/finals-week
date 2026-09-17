@@ -14,6 +14,7 @@ public class Deck
         this.CourseCode = courseCode;
         this.Description = description;
         this.Visibility = visibility;
+        this.Id = Guid.NewGuid();
     }
 
     public string Title { get; private set; }
@@ -23,6 +24,8 @@ public class Deck
     public string? Description { get; set; }
 
     public Visibility Visibility { get; set; }
+
+    public Guid Id { get; }
 
     public void Rename(string newTitle)
     {
