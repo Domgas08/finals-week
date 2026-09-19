@@ -1,0 +1,74 @@
+@page "/decks"
+@rendermode InteractiveServer
+@using FinalsWeek.Core
+@using FinalsWeek.Application
+@inject IDeckStore DeckStore
+
+<PageTitle>Deck'ai</PageTitle>
+
+<h1>Mano deck'ai</h1>
+
+<div class="mb-4">
+    <input @bind="newTitle" placeholder="Pavadinimas" />
+    <input @bind="newCourseCode" placeholder="Kurso kodas (nebūtina)" />
+    <button @onclick="CreateDeck">Sukurti</button>
+</div>
+
+@if (error is not null)
+{
+    <p style="color: red">@error</p>
+}
+
+@if (decks.Count == 0)
+{
+    <p>Kol kas neturite nė vieno deck'o. Sukurkite pirmą.</p>
+}
+else
+{
+    <ul>
+        @foreach (var deck in decks)
+        {
+            <li>
+                <strong>@deck.Title</strong>
+                @if (deck.CourseCode is not null)
+                {
+                    <span> — @deck.CourseCode</span>
+                }
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private IReadOnlyList<Deck> decks = [];
+    private string newTitle = string.Empty;
+    private string newCourseCode = string.Empty;
+    private string? error;
+
+    protected override void OnInitialized()
+    {
+        decks = DeckStore.GetAll();
+    }
+
+    private void CreateDeck()
+    {
+        error = null;
+
+        try
+        {
+            var courseCode = string.IsNullOrWhiteSpace(newCourseCode)
+                ? null
+                : newCourseCode.Trim();
+
+            DeckStore.Add(new Deck(newTitle, courseCode: courseCode));
+
+            newTitle = string.Empty;
+            newCourseCode = string.Empty;
+            decks = DeckStore.GetAll();
+        }
+        catch (ArgumentException ex)
+        {
+            error = ex.Message;
+        }
+    }
+}
