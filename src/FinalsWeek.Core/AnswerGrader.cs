@@ -2,7 +2,10 @@ namespace FinalsWeek.Core;
 
 public static class AnswerGrader
 {
-    public static AnswerGrading Grade(Question question, int selectedIndex, int? responseTimeSeconds = null, bool allowPartialCredit = false)
+// TODO: when more structure is analyzed - implement Time and Credit into grader
+    private const int BasePoints = 100;
+
+    public static AnswerGrading Grade(Question question, int selectedIndex, TimeSpan? responseTime = null, bool allowPartialCredit = false)
     {
         if (question == null)
         {
@@ -11,7 +14,7 @@ public static class AnswerGrader
 
         bool isValidSelection = selectedIndex >= 0 && selectedIndex < question.Options.Count;
         bool isCorrect = isValidSelection && selectedIndex == question.CorrectIndex;
-        int pointsAwarded = isCorrect ? 100 : 0;
+        int pointsAwarded = isCorrect ? BasePoints : 0;
 
         return new AnswerGrading(isCorrect, isValidSelection, pointsAwarded, question.CorrectIndex, question.Options[question.CorrectIndex]);
     }
