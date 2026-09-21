@@ -42,6 +42,13 @@ public class Deck
         questions.Add(question);
     }
 
+    public bool RemoveQuestion(Guid questionId)
+    {
+        return questions.RemoveAll(q => q.Id == questionId) == 0
+                ? false
+                : true;
+    }
+
     private static string ValidateTitle(string title)
     {
         title = title.Trim();
