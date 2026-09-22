@@ -8,6 +8,8 @@ public enum Visibility
 
 public class Deck
 {
+    private readonly List<Question> questions = new();
+
     public Deck(string title, string? courseCode = null, string? description = null, Visibility visibility = Visibility.Private)
     {
         this.Title = ValidateTitle(title);
@@ -27,9 +29,22 @@ public class Deck
 
     public Guid Id { get; }
 
+    public IReadOnlyList<Question> Questions => questions.AsReadOnly();
+
     public void Rename(string newTitle)
     {
         this.Title = ValidateTitle(newTitle);
+    }
+
+    public void AddQuestion(Question question)
+    {
+        ArgumentNullException.ThrowIfNull(question);
+        questions.Add(question);
+    }
+
+    public bool RemoveQuestion(Guid questionId)
+    {
+        return questions.RemoveAll(q => q.Id == questionId) > 0;
     }
 
     private static string ValidateTitle(string title)
