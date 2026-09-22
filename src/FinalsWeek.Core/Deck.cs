@@ -44,9 +44,7 @@ public class Deck
 
     public bool RemoveQuestion(Guid questionId)
     {
-        return questions.RemoveAll(q => q.Id == questionId) == 0
-                ? false
-                : true;
+        return questions.RemoveAll(q => q.Id == questionId) > 0;
     }
 
     private static string ValidateTitle(string title)

@@ -9,6 +9,7 @@ public record Question
         CorrectIndex = ValidateCorrectIndex(correctIndex, Options);
         Topic = topic;
         TimeLimitSeconds = ValidateTimeLimit(timeLimitSeconds);
+        Id = Guid.NewGuid();
     }
 
     protected Question(Question original)
@@ -18,6 +19,7 @@ public record Question
         Options = ValidateOptions(original.Options);
         TimeLimitSeconds = ValidateTimeLimit(original.TimeLimitSeconds);
         Topic = original.Topic;
+        Id = Guid.NewGuid();
     }
 
     public string Prompt { get; private init; }
@@ -27,6 +29,8 @@ public record Question
     public int CorrectIndex { get; private init; }
 
     public string? Topic { get; private init; }
+
+    public Guid Id { get; }
 
     public int TimeLimitSeconds { get; private init; }
 
