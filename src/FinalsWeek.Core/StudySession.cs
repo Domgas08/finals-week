@@ -2,34 +2,50 @@ namespace FinalsWeek.Core;
 
 public class StudySession
 {
-    private readonly IEnumerator<Question> cursor;
+    private readonly Dictionary<int, AnswerOutcome> answers = new();
 
-    public Guid CurrentQuestionId => CurrentQuestion.Id;
-
-    public Question CurrentQuestion => cursor.Current ?? throw new InvalidOperationException("MoveNext must be called before CurrentQuestion can be read.");
-
-    public StudySession(Deck deck)
+    public StudySession(Guid deckId, IReadOnlyList<Question> questions)
     {
-        ArgumentNullException.ThrowIfNull(deck, nameof(deck));
-        this.cursor = deck.GetEnumerator();
+        ArgumentNullException.ThrowIfNull(questions);
+
+        DeckId = deckId;
+        Questions = questions.ToArray();
+        CurrentIndex = 0;
     }
 
-    public bool MoveNext()
-    {
-        return cursor.MoveNext();
-    }
+    public Guid DeckId { get; }
 
-    public static StudySession Resume(Deck deck, Guid questionId)
+    public IReadOnlyList<Question> Questions { get; }
+
+    public int CurrentIndex { get; private set; }
+
+    public IReadOnlyDictionary<int, AnswerOutcome> Answers => answers;
+
+    public SessionProgress Progress => new(answers.Count, Questions.Count);
+
+    public bool IsCompleted => CurrentIndex >= Questions.Count;
+
+    public Question? CurrentQuestion =>
+        IsCompleted ? null : Questions[CurrentIndex];
+
+    public void AnswerCurrentQuestion(AnswerOutcome outcome)
     {
-        var session = new StudySession(deck);
-        while (session.MoveNext())
+        if (!Enum.IsDefined(outcome))
         {
-            if (session.CurrentQuestionId == questionId)
-            {
-                return session;
-            }
+            throw new ArgumentOutOfRangeException(nameof(outcome), "Unrecognized answer outcome.");
         }
 
-        throw new ArgumentOutOfRangeException(nameof(questionId), $"Question with ID {questionId} not found in deck {deck.Title}.");
+        if (IsCompleted)
+        {
+            throw new InvalidOperationException("Session is already completed.");
+        }
+
+        answers[CurrentIndex] = outcome;
+        CurrentIndex++;
+    }
+
+    public void SkipCurrentQuestion()
+    {
+        AnswerCurrentQuestion(AnswerOutcome.Skipped);
     }
 }
