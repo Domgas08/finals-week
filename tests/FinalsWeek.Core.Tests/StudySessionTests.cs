@@ -1,11 +1,13 @@
 namespace FinalsWeek.Core.Tests;
 
+using System;
+using System.Collections.Generic;
 using FinalsWeek.Core;
 using Xunit;
 
 public class StudySessionTests
 {
-    private Deck CreateTestDeck() => new Deck("Test Deck");
+    private Guid CreateTestDeckId() => Guid.NewGuid();
 
     private List<Question> CreateTestQuestions(int count)
     {
@@ -21,7 +23,7 @@ public class StudySessionTests
     [Fact]
     private void Progress_WithNoQuestions_ReturnsZeroPercentage()
     {
-        var session = new StudySession(CreateTestDeck(), new List<Question>());
+        var session = new StudySession(CreateTestDeckId(), new List<Question>());
 
         var progress = session.Progress;
 
@@ -33,7 +35,7 @@ public class StudySessionTests
     [Fact]
     private void Progress_CalculatesPartialAndFullCompletionCorrectly()
     {
-        var session = new StudySession(CreateTestDeck(), CreateTestQuestions(4));
+        var session = new StudySession(CreateTestDeckId(), CreateTestQuestions(4));
 
         Assert.Equal(0, session.Progress.Answered);
         Assert.Equal(0.0, session.Progress.Percentage);
@@ -51,23 +53,28 @@ public class StudySessionTests
     }
 
     [Fact]
-    private void Constructor_NullDeck_ThrowsArgumentNullException()
+    private void Constructor_ValidDeckIdAndQuestions_InitializesCorrectly()
     {
-        Assert.Throws<ArgumentNullException>(() =>
-            new StudySession(null!, CreateTestQuestions(1)));
+        var deckId = CreateTestDeckId();
+        var questions = CreateTestQuestions(2);
+
+        var session = new StudySession(deckId, questions);
+
+        Assert.Equal(deckId, session.DeckId);
+        Assert.Equal(questions.Count, session.Questions.Count);
     }
 
     [Fact]
     private void Constructor_NullQuestions_ThrowsArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new StudySession(CreateTestDeck(), null!));
+            new StudySession(CreateTestDeckId(), null!));
     }
 
     [Fact]
     private void AnswerCurrentQuestion_AfterSessionCompleted_ThrowsInvalidOperationException()
     {
-        var session = new StudySession(CreateTestDeck(), CreateTestQuestions(1));
+        var session = new StudySession(CreateTestDeckId(), CreateTestQuestions(1));
 
         session.AnswerCurrentQuestion(AnswerOutcome.Correct);
 
@@ -78,7 +85,7 @@ public class StudySessionTests
     [Fact]
     private void AnswerCurrentQuestion_InvalidOutcome_ThrowsArgumentOutOfRangeException()
     {
-        var session = new StudySession(CreateTestDeck(), CreateTestQuestions(1));
+        var session = new StudySession(CreateTestDeckId(), CreateTestQuestions(1));
 
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             session.AnswerCurrentQuestion((AnswerOutcome)99));

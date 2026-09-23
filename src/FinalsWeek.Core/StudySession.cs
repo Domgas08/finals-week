@@ -4,16 +4,16 @@ public class StudySession
 {
     private readonly Dictionary<int, AnswerOutcome> answers = new();
 
-    public StudySession(Deck deck, IReadOnlyList<Question> questions)
+    public StudySession(Guid deckId, IReadOnlyList<Question> questions)
     {
-        Deck = deck ?? throw new ArgumentNullException(nameof(deck));
         ArgumentNullException.ThrowIfNull(questions);
 
+        DeckId = deckId;
         Questions = questions.ToArray();
         CurrentIndex = 0;
     }
 
-    public Deck Deck { get; }
+    public Guid DeckId { get; }
 
     public IReadOnlyList<Question> Questions { get; }
 
