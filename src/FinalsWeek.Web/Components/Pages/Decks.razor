@@ -30,11 +30,21 @@ else
         {
             <li>
                 <strong>@deck.Title</strong>
+
                 @if (deck.CourseCode is not null)
                 {
                     <span> — @deck.CourseCode</span>
                 }
+
+                <a class="ms-2" href="@($"/decks/{deck.Id}/questions/add")">
+                    Add question
+                </a>
+
+                <span class="ms-2">
+                    Questions: @deck.Questions.Count
+                </span>
             </li>
+            
         }
     </ul>
 }

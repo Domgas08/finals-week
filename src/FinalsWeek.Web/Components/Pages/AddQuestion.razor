@@ -1,0 +1,199 @@
+@page "/decks/{DeckId:guid}/questions/add"
+@rendermode InteractiveServer
+@using FinalsWeek.Core
+@using FinalsWeek.Application
+@inject IDeckStore DeckStore
+
+<PageTitle>Add question</PageTitle>
+
+@if (deck is null)
+{
+    <h1>Deck not found</h1>
+}
+else
+{
+    <h1>Add question to @deck.Title</h1>
+
+    <div class="mb-3">
+        <label class="form-label">Question</label>
+        <input class="form-control" @bind="prompt" />
+    </div>
+
+    <h5>Answer options</h5>
+
+    @for (var i = 0; i < options.Count; i++)
+    {
+        var index = i;
+
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <input type="radio"
+                   name="correctOption"
+                   checked="@(correctIndex == index)"
+                   @onchange="() => correctIndex = index" />
+
+            <input class="form-control"
+                   @bind="options[index]"
+                   placeholder="@($"Option {index + 1}")" />
+
+            @if (options.Count > 2)
+            {
+                <button type="button"
+                        class="btn btn-outline-danger"
+                        @onclick="() => RemoveOption(index)">
+                    Remove
+                </button>
+            }
+        </div>
+    }
+
+    @if (options.Count < 6)
+    {
+        <button type="button"
+                class="btn btn-outline-secondary mb-3"
+                @onclick="AddOption">
+            Add option
+        </button>
+    }
+
+    <div class="mb-3">
+        <label class="form-label">Topic (optional)</label>
+        <input class="form-control" @bind="topic" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Time limit (seconds)</label>
+        <input type="number"
+               min="5"
+               class="form-control"
+               @bind="timeLimitSeconds" />
+    </div>
+
+    @if (error is not null)
+    {
+        <p class="text-danger">@error</p>
+    }
+
+    @if (success is not null)
+    {
+        <p class="text-success">@success</p>
+    }
+
+    <button type="button"
+            class="btn btn-primary"
+            @onclick="SubmitQuestion">
+        Add question
+    </button>
+}
+
+@code {
+    [Parameter]
+    public Guid DeckId { get; set; }
+
+    private Deck? deck;
+
+    private string prompt = string.Empty;
+
+    private List<string> options =
+    [
+        string.Empty,
+        string.Empty,
+    ];
+
+    private int? correctIndex;
+
+    private string topic = string.Empty;
+
+    private int timeLimitSeconds = 20;
+
+    private string? error;
+
+    private string? success;
+
+    protected override void OnParametersSet()
+    {
+        deck = DeckStore.GetById(DeckId);
+    }
+
+    private void AddOption()
+    {
+        if (options.Count < 6)
+        {
+            options.Add(string.Empty);
+        }
+    }
+
+    private void RemoveOption(int index)
+    {
+        if (options.Count <= 2)
+        {
+            return;
+        }
+
+        options.RemoveAt(index);
+
+        if (correctIndex == index)
+        {
+            correctIndex = null;
+        }
+        else if (correctIndex > index)
+        {
+            correctIndex--;
+        }
+    }
+
+    private void SubmitQuestion()
+    {
+        error = null;
+        success = null;
+
+        if (deck is null)
+        {
+            error = "Deck not found.";
+            return;
+        }
+
+        if (correctIndex is null)
+        {
+            error = "Select a correct answer.";
+            return;
+        }
+
+        try
+        {
+            var questionTopic = string.IsNullOrWhiteSpace(topic)
+                ? null
+                : topic.Trim();
+
+            var question = new Question(
+                prompt,
+                options,
+                correctIndex.Value,
+                questionTopic,
+                timeLimitSeconds);
+
+            deck.AddQuestion(question);
+
+            success = "Question added successfully.";
+
+            ResetForm();
+        }
+        catch (ArgumentException ex)
+        {
+            error = ex.Message;
+        }
+    }
+
+    private void ResetForm()
+    {
+        prompt = string.Empty;
+        options =
+        [
+            string.Empty,
+            string.Empty,
+        ];
+
+        correctIndex = null;
+        topic = string.Empty;
+        timeLimitSeconds = 20;
+    }
+}
