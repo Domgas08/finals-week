@@ -9,6 +9,8 @@ public class InMemorySessionStore : ISessionStore
 
     public StudySession Create(Deck deck)
     {
+        ArgumentNullException.ThrowIfNull(deck);
+
         var session = new StudySession(deck.Id, deck.Questions);
         sessions[session.Id] = session;
         return session;
