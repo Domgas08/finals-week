@@ -36,7 +36,16 @@ else
                 {
                     <span> — @deck.CourseCode</span>
                 }
+
+                <a class="ms-2" href="@($"/decks/{deck.Id}/questions/add")">
+                    Add question
+                </a>
+
+                <span class="ms-2">
+                    Questions: @deck.Questions.Count
+                </span>
             </li>
+            
         }
     </ul>
 }
