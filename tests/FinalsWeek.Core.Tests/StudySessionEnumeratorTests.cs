@@ -17,11 +17,11 @@ public class StudySessionEnumeratorTests
         deck.AddQuestion(third);
         var session = new StudySessionEnumerator(deck);
         session.MoveNext();
-        Assert.Same(first, session.CurrentQuestion);
+        Assert.Same(first, session.Current);
         session.MoveNext();
-        Assert.Same(second, session.CurrentQuestion);
+        Assert.Same(second, session.Current);
         session.MoveNext();
-        Assert.Same(third, session.CurrentQuestion);
+        Assert.Same(third, session.Current);
     }
 
     [Fact]

@@ -1,12 +1,16 @@
 namespace FinalsWeek.Core;
 
-public class StudySessionEnumerator
+using System.Collections;
+
+public class StudySessionEnumerator : IEnumerator<Question>
 {
     private readonly IEnumerator<Question> cursor;
 
-    public Guid CurrentQuestionId => CurrentQuestion.Id;
+    public Guid CurrentQuestionId => Current.Id;
 
-    public Question CurrentQuestion => cursor.Current ?? throw new InvalidOperationException("MoveNext must be called before CurrentQuestion can be read.");
+    object IEnumerator.Current => Current;
+
+    public Question Current => cursor.Current ?? throw new InvalidOperationException("MoveNext must be called before CurrentQuestion can be read.");
 
     public StudySessionEnumerator(Deck deck)
     {
@@ -14,6 +18,16 @@ public class StudySessionEnumerator
         this.cursor = deck.GetEnumerator();
     }
 
+    public void Reset()
+    {
+        cursor.Reset();
+    }
+
+    public void Dispose()
+    {
+        cursor.Dispose();
+    }
+	
     public bool MoveNext()
     {
         return cursor.MoveNext();
