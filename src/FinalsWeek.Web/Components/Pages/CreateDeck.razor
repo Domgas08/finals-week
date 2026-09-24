@@ -1,0 +1,81 @@
+@page "/decks/create"
+@rendermode InteractiveServer
+
+@using FinalsWeek.Core
+@using FinalsWeek.Application
+
+@inject IDeckStore DeckStore
+@inject NavigationManager Navigation
+
+<h1>Create deck</h1>
+
+<EditForm Model="@form" OnSubmit="@SubmitForm">
+    <div class="mb-3">
+        <label class="form-label">Title</label>
+        <InputText class="form-control" @bind-Value="form.Title" />
+
+        @if (error is not null)
+        {
+            <div class="text-danger">@error</div>
+        }
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Course code</label>
+        <InputText class="form-control" @bind-Value="form.CourseCode" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Description</label>
+        <InputTextArea class="form-control" @bind-Value="form.Description" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Visibility</label>
+        <InputSelect class="form-select" @bind-Value="form.Visibility">
+            <option value="@Visibility.Private">Private</option>
+            <option value="@Visibility.Public">Public</option>
+        </InputSelect>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+</EditForm>
+
+@code {
+    private CreateDeckForm form = new();
+    private string? error;
+
+    private void SubmitForm()
+    {
+        error = null;
+
+        try
+        {
+            var deck = new Deck(
+                form.Title,
+                courseCode: string.IsNullOrWhiteSpace(form.CourseCode)
+                    ? null
+                    : form.CourseCode.Trim(),
+                description: form.Description,
+                visibility: form.Visibility);
+
+            DeckStore.Add(deck);
+            Navigation.NavigateTo("/decks");
+        }
+        catch (ArgumentException ex)
+        {
+            error = ex.Message;
+        }
+    }
+
+    private class CreateDeckForm
+    {
+        public string Title { get; set; } = string.Empty;
+
+        public string? CourseCode { get; set; }
+
+        public string? Description { get; set; }
+
+        public Visibility Visibility { get; set; } = Visibility.Private;
+    }
+}

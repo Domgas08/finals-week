@@ -1,61 +1,114 @@
 namespace FinalsWeek.Core.Tests;
 
+using System;
+using System.Collections.Generic;
 using FinalsWeek.Core;
 using Xunit;
 
 public class StudySessionTests
 {
-    [Fact]
-    public void MoveNext_WalksThroughAllQuestionsInOrder()
+    private Guid CreateTestDeckId() => Guid.NewGuid();
+
+    private List<Question> CreateTestQuestions(int count)
     {
-        var deck = new Deck("Sample deck");
-        var first = new Question("What is 4 + 5?", new List<string> { "5", "6", "7", "8", "9" }, 4);
-        var second = new Question("What is 2 + 2?", new List<string> { "3", "4", "5" }, 1);
-        var third = new Question("What is 2*9+8?", new List<string> { "26", "18", "92", "44" }, 0);
-        deck.AddQuestion(first);
-        deck.AddQuestion(second);
-        deck.AddQuestion(third);
-        var session = new StudySession(deck);
-        session.MoveNext();
-        Assert.Same(first, session.CurrentQuestion);
-        session.MoveNext();
-        Assert.Same(second, session.CurrentQuestion);
-        session.MoveNext();
-        Assert.Same(third, session.CurrentQuestion);
+        var questions = new List<Question>();
+        for (int i = 0; i < count; i++)
+        {
+            questions.Add(new Question($"Question {i + 1}", new[] { "A", "B" }, 0));
+        }
+
+        return questions;
     }
 
     [Fact]
-    public void MoveNext_ReturnsFalseWhenDeckIsFinished()
+    private void Progress_WithNoQuestions_ReturnsZeroPercentage()
     {
-        var deck = new Deck("Sample deck");
-        var first = new Question("What is 4 + 5?", new List<string> { "5", "6", "7", "8", "9" }, 4);
-        var second = new Question("What is 2 + 2?", new List<string> { "3", "4", "5" }, 1);
-        var third = new Question("What is 2*9+8?", new List<string> { "26", "18", "92", "44" }, 0);
-        deck.AddQuestion(first);
-        deck.AddQuestion(second);
-        deck.AddQuestion(third);
-        var session = new StudySession(deck);
-        session.MoveNext();
-        session.MoveNext();
-        session.MoveNext();
-        Assert.False(session.MoveNext());
+        var session = new StudySession(CreateTestDeckId(), new List<Question>());
+
+        var progress = session.Progress;
+
+        Assert.Equal(0, progress.Answered);
+        Assert.Equal(0, progress.Total);
+        Assert.Equal(0.0, progress.Percentage);
     }
 
     [Fact]
-    public void Resume_WithSavedQuestionId_ReturnsToThatQuestion()
+    private void Progress_CalculatesPartialAndFullCompletionCorrectly()
     {
-        var deck = new Deck("Sample deck");
-        var first = new Question("What is 4 + 5?", new List<string> { "5", "6", "7", "8", "9" }, 4);
-        var second = new Question("What is 2 + 2?", new List<string> { "3", "4", "5" }, 1);
-        var third = new Question("What is 2*9+8?", new List<string> { "26", "18", "92", "44" }, 0);
-        deck.AddQuestion(first);
-        deck.AddQuestion(second);
-        deck.AddQuestion(third);
-        var session = new StudySession(deck);
-        session.MoveNext();
-        session.MoveNext();
-        var savedId = session.CurrentQuestionId;
-        var resumedSession = StudySession.Resume(deck, savedId);
-        Assert.Equal(savedId, resumedSession.CurrentQuestionId);
+        var session = new StudySession(CreateTestDeckId(), CreateTestQuestions(4));
+
+        Assert.Equal(0, session.Progress.Answered);
+        Assert.Equal(0.0, session.Progress.Percentage);
+
+        session.AnswerCurrentQuestion(AnswerOutcome.Correct);
+
+        Assert.Equal(1, session.Progress.Answered);
+        Assert.Equal(25.0, session.Progress.Percentage);
+
+        session.SkipCurrentQuestion();
+
+        Assert.Equal(2, session.Progress.Answered);
+        Assert.Equal(50.0, session.Progress.Percentage);
+        Assert.Equal(AnswerOutcome.Skipped, session.Answers[1]);
+    }
+
+    [Fact]
+    private void Constructor_ValidDeckIdAndQuestions_InitializesCorrectly()
+    {
+        var deckId = CreateTestDeckId();
+        var questions = CreateTestQuestions(2);
+
+        var session = new StudySession(deckId, questions);
+
+        Assert.Equal(deckId, session.DeckId);
+        Assert.Equal(questions.Count, session.Questions.Count);
+    }
+
+    [Fact]
+    private void Constructor_NullQuestions_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            new StudySession(CreateTestDeckId(), null!));
+    }
+
+    [Fact]
+    private void AnswerCurrentQuestion_AfterSessionCompleted_ThrowsInvalidOperationException()
+    {
+        var session = new StudySession(CreateTestDeckId(), CreateTestQuestions(1));
+
+        session.AnswerCurrentQuestion(AnswerOutcome.Correct);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            session.AnswerCurrentQuestion(AnswerOutcome.Correct));
+    }
+
+    [Fact]
+    private void AnswerCurrentQuestion_InvalidOutcome_ThrowsArgumentOutOfRangeException()
+    {
+        var session = new StudySession(CreateTestDeckId(), CreateTestQuestions(1));
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            session.AnswerCurrentQuestion((AnswerOutcome)99));
+    }
+
+    [Fact]
+    private void SessionProgress_NegativeTotal_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new SessionProgress(0, -1));
+    }
+
+    [Fact]
+    private void SessionProgress_NegativeAnswered_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new SessionProgress(-1, 5));
+    }
+
+    [Fact]
+    private void SessionProgress_AnsweredGreaterThanTotal_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new SessionProgress(6, 5));
     }
 }
