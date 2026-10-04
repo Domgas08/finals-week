@@ -1,17 +1,15 @@
 namespace FinalsWeek.Application;
 
-using FinalsWeek.Core;
-
 public class CsvImporter
 {
     private const string ExpectedHeader =
         "Prompt,Option1,Option2,Option3,Option4,Option5,Option6,CorrectIndex,Topic,TimeLimitSeconds";
 
-    public CsvImportResult Import(Stream stream)
+    public DeckImportResult Import(Stream stream)
     {
         ArgumentNullException.ThrowIfNull(stream);
 
-        var questions = new List<Question>();
+        var successfulRows = new List<QuestionRowParsed>();
         var failedRows = new List<ImportRowFailure>();
 
         using var reader = new StreamReader(stream, leaveOpen: true);
@@ -20,16 +18,16 @@ public class CsvImporter
 
         if (header is null)
         {
-            return new CsvImportResult(
-                questions,
+            return new DeckImportResult(
+                successfulRows,
                 failedRows,
                 "The CSV file is empty.");
         }
 
         if (!string.Equals(header.Trim(), ExpectedHeader, StringComparison.OrdinalIgnoreCase))
         {
-            return new CsvImportResult(
-                questions,
+            return new DeckImportResult(
+                successfulRows,
                 failedRows,
                 "The CSV header is invalid.");
         }
@@ -64,6 +62,11 @@ public class CsvImporter
                     .Where(option => !string.IsNullOrWhiteSpace(option))
                     .ToList();
 
+                if (options.Count < 2)
+                {
+                    throw new ArgumentException("A question must have at least 2 options.");
+                }
+
                 if (!int.TryParse(columns[7], out var correctIndex))
                 {
                     throw new ArgumentException("CorrectIndex must be a number.");
@@ -81,14 +84,14 @@ public class CsvImporter
                     throw new ArgumentException("TimeLimitSeconds must be a number.");
                 }
 
-                var question = new Question(
+                var parsedRow = new QuestionRowParsed(
                     prompt,
                     options,
                     correctIndex,
                     topic,
                     timeLimitSeconds);
 
-                questions.Add(question);
+                successfulRows.Add(parsedRow);
             }
             catch (Exception ex) when (
                 ex is ArgumentException
@@ -99,7 +102,7 @@ public class CsvImporter
             }
         }
 
-        return new CsvImportResult(questions, failedRows);
+        return new DeckImportResult(successfulRows, failedRows);
     }
 
     private static List<string> ParseCsvLine(string line)
