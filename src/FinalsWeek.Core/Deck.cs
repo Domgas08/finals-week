@@ -1,12 +1,14 @@
 ﻿namespace FinalsWeek.Core;
 
+using System.Collections;
+
 public enum Visibility
 {
     Public,
     Private,
 }
 
-public class Deck
+public class Deck : IEnumerable<Question>
 {
     private readonly List<Question> questions = new();
 
@@ -17,6 +19,16 @@ public class Deck
         this.Description = description;
         this.Visibility = visibility;
         this.Id = Guid.NewGuid();
+    }
+
+    public IEnumerator<Question> GetEnumerator()
+    {
+        return questions.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 
     public string Title { get; private set; }
