@@ -20,11 +20,11 @@ public class CsvImporterTests
         var result = importer.Import(stream);
 
         Assert.True(result.Success);
-        Assert.Single(result.Questions);
+        Assert.Single(result.SuccessfulRows);
         Assert.Empty(result.FailedRows);
 
-        Assert.Equal("What is 2+2?", result.Questions[0].Prompt);
-        Assert.Equal("Math", result.Questions[0].Topic);
+        Assert.Equal("What is 2+2?", result.SuccessfulRows[0].Prompt);
+        Assert.Equal("Math", result.SuccessfulRows[0].Topic);
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class CsvImporterTests
         var result = importer.Import(stream);
 
         Assert.True(result.Success);
-        Assert.Empty(result.Questions);
+        Assert.Empty(result.SuccessfulRows);
         Assert.Single(result.FailedRows);
         Assert.Equal(2, result.FailedRows[0].LineNumber);
     }
@@ -62,7 +62,7 @@ public class CsvImporterTests
         var result = importer.Import(stream);
 
         Assert.True(result.Success);
-        Assert.Equal(2, result.Questions.Count);
+        Assert.Equal(2, result.SuccessfulRows.Count);
         Assert.Single(result.FailedRows);
         Assert.Equal(3, result.FailedRows[0].LineNumber);
     }
