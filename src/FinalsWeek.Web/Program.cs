@@ -9,6 +9,9 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddSingleton<IDeckStore, InMemoryDeckStore>();
 
+var maxUploadSize = builder.Configuration.GetValue<long>("Upload:MaxSizeInBytes");
+builder.Services.AddSingleton(new UploadGuard(maxUploadSize));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
