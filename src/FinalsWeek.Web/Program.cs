@@ -13,6 +13,9 @@ builder.Services.AddSingleton<ISessionStore, InMemorySessionStore>();
 var maxUploadSize = builder.Configuration.GetValue<long>("Upload:MaxSizeInBytes");
 builder.Services.AddSingleton(new UploadGuard(maxUploadSize));
 
+builder.Services.AddSingleton<IQuestionImporter, CsvImporter>();
+builder.Services.AddSingleton<IQuestionImporter, JsonImporter>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

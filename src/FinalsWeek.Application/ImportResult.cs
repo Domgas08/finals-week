@@ -2,9 +2,9 @@ namespace FinalsWeek.Application;
 
 using FinalsWeek.Core;
 
-public class CsvImportResult
+public class ImportResult
 {
-    public CsvImportResult(
+    public ImportResult(
         IReadOnlyList<Question> questions,
         IReadOnlyList<ImportRowFailure> failedRows,
         string? failureReason = null)

@@ -2,12 +2,14 @@ namespace FinalsWeek.Application;
 
 using FinalsWeek.Core;
 
-public class CsvImporter
+public class CsvImporter : IQuestionImporter
 {
     private const string ExpectedHeader =
         "Prompt,Option1,Option2,Option3,Option4,Option5,Option6,CorrectIndex,Topic,TimeLimitSeconds";
 
-    public CsvImportResult Import(Stream stream)
+    public string Extension => ".csv";
+
+    public ImportResult Import(Stream stream)
     {
         ArgumentNullException.ThrowIfNull(stream);
 
@@ -20,7 +22,7 @@ public class CsvImporter
 
         if (header is null)
         {
-            return new CsvImportResult(
+            return new ImportResult(
                 questions,
                 failedRows,
                 "The CSV file is empty.");
@@ -28,7 +30,7 @@ public class CsvImporter
 
         if (!string.Equals(header.Trim(), ExpectedHeader, StringComparison.OrdinalIgnoreCase))
         {
-            return new CsvImportResult(
+            return new ImportResult(
                 questions,
                 failedRows,
                 "The CSV header is invalid.");
@@ -99,7 +101,7 @@ public class CsvImporter
             }
         }
 
-        return new CsvImportResult(questions, failedRows);
+        return new ImportResult(questions, failedRows);
     }
 
     private static List<string> ParseCsvLine(string line)
