@@ -9,6 +9,9 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddSingleton<IDeckStore, InMemoryDeckStore>();
 
+builder.Services.AddSingleton<IQuestionImporter, CsvImporter>();
+builder.Services.AddSingleton<IQuestionImporter, JsonImporter>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
