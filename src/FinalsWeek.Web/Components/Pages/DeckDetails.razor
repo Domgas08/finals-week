@@ -1,0 +1,61 @@
+@page "/decks/{DeckId:guid}"
+@rendermode InteractiveServer
+@using FinalsWeek.Core
+@using FinalsWeek.Application
+@inject IDeckStore DeckStore
+
+<PageTitle>Deck details</PageTitle>
+
+@if (deck is null)
+{
+    <p>Deck not found.</p>
+}
+else
+{
+    <h1>@deck.Title</h1>
+
+    @if (!string.IsNullOrWhiteSpace(deck.CourseCode))
+    {
+        <p>Course: @deck.CourseCode</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(deck.Description))
+    {
+        <p>@deck.Description</p>
+    }
+
+    <h2>Questions</h2>
+
+    @if (deck.Questions.Count == 0)
+    {
+        <p>No questions added yet.</p>
+    }
+    else
+    {
+        <ul>
+            @foreach (var question in deck.Questions)
+            {
+                <li>
+                    <strong>@question.Prompt</strong>
+
+                    @if (!string.IsNullOrWhiteSpace(question.Topic))
+                    {
+                        <span> — @question.Topic</span>
+                    }
+                </li>
+            }
+        </ul>
+    }
+}
+
+@code {
+    [Parameter]
+    public Guid DeckId { get; set; }
+
+    private Deck? deck;
+
+    protected override void OnParametersSet()
+    {
+        deck = DeckStore.GetById(DeckId);
+    }
+}
