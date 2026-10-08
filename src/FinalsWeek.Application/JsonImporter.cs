@@ -10,7 +10,7 @@ public class JsonImporter : IQuestionImporter
         PropertyNameCaseInsensitive = true,
     };
 
-    public string Extention => ".json";
+    public string Extension => ".json";
 
     public ImportResult Import(Stream stream)
     {

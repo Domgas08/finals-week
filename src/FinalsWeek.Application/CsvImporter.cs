@@ -7,7 +7,7 @@ public class CsvImporter : IQuestionImporter
     private const string ExpectedHeader =
         "Prompt,Option1,Option2,Option3,Option4,Option5,Option6,CorrectIndex,Topic,TimeLimitSeconds";
 
-    public string Extention => ".csv";
+    public string Extension => ".csv";
 
     public ImportResult Import(Stream stream)
     {
