@@ -13,7 +13,8 @@
 else
 {
     <h1>@deck.Title</h1>
-
+    <a href="@($"/decks/{DeckId}/import")">Import questions from a file</a>
+    
     @if (!string.IsNullOrWhiteSpace(deck.CourseCode))
     {
         <p>Course: @deck.CourseCode</p>
