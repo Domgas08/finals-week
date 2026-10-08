@@ -8,6 +8,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddSingleton<IDeckStore, InMemoryDeckStore>();
+builder.Services.AddSingleton<ISessionStore, InMemorySessionStore>();
 
 var app = builder.Build();
 

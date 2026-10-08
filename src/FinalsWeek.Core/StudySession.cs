@@ -8,12 +8,15 @@ public class StudySession
     {
         ArgumentNullException.ThrowIfNull(questions);
 
+        Id = Guid.NewGuid();
         DeckId = deckId;
         Questions = questions.ToArray();
         CurrentIndex = 0;
     }
 
     public Guid DeckId { get; }
+
+    public Guid Id { get; }
 
     public IReadOnlyList<Question> Questions { get; }
 
