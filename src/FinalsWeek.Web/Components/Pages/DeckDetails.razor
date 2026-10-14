@@ -3,12 +3,15 @@
 @using FinalsWeek.Core
 @using FinalsWeek.Application
 @inject IDeckStore DeckStore
+@inject ISessionStore SessionStore
+@inject NavigationManager Navigation
 
 <PageTitle>Deck details</PageTitle>
 
 @if (deck is null)
 {
     <p>Deck not found.</p>
+    <a href="/decks">Back to decks</a>
 }
 else
 {
@@ -24,9 +27,23 @@ else
         <p>@deck.Description</p>
     }
 
+    <div class="mb-3">
+        @if (HasQuestions)
+        {
+            <button class="btn btn-primary" @onclick="Study">Study</button>
+        }
+        else
+        {
+            <span class="text-muted">Add questions before studying.</span>
+        }
+
+        <a class="ms-2" href="@($"/decks/{DeckId}/questions/add")">Add question</a>
+        <a class="ms-2" href="@($"/decks/{DeckId}/import")">Import questions</a>
+    </div>
+
     <h2>Questions</h2>
 
-    @if (deck.Questions.Count == 0)
+    @if (!HasQuestions)
     {
         <p>No questions added yet.</p>
     }
@@ -46,6 +63,8 @@ else
             }
         </ul>
     }
+
+    <a href="/decks">Back to decks</a>
 }
 
 @code {
@@ -54,8 +73,22 @@ else
 
     private Deck? deck;
 
+    private bool HasQuestions => deck?.Questions.Count > 0;
+
     protected override void OnParametersSet()
     {
         deck = DeckStore.GetById(DeckId);
+    }
+
+    private void Study()
+    {
+        if (deck is null)
+        {
+            return;
+        }
+
+        var session = SessionStore.FindActive(deck.Id) ?? SessionStore.Create(deck);
+
+        Navigation.NavigateTo($"/study/{session.Id}");
     }
 }

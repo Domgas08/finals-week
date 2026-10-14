@@ -7,6 +7,11 @@ public class InMemorySessionStore : ISessionStore
 {
     private readonly ConcurrentDictionary<Guid, StudySession> sessions = new();
 
+    public StudySession? FindActive(Guid deckId)
+    {
+        return sessions.Values.FirstOrDefault(s => s.DeckId == deckId && !s.IsCompleted);
+    }
+
     public StudySession Create(Deck deck)
     {
         ArgumentNullException.ThrowIfNull(deck);
@@ -33,5 +38,4 @@ public class InMemorySessionStore : ISessionStore
         ArgumentNullException.ThrowIfNull(session);
         sessions[session.Id] = session;
     }
-
 }
