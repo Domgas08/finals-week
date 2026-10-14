@@ -39,7 +39,7 @@ public class InMemorySessionStoreTests
         var first = store.Create(deck);
         var second = store.Create(deck);
 
-        first.AnswerCurrentQuestion(AnswerOutcome.Correct);
+        first.AnswerCurrentQuestion(0, AnswerOutcome.Correct, 10);
 
         Assert.NotEqual(first.Id, second.Id);
         Assert.Equal(1, first.CurrentIndex);
@@ -83,7 +83,7 @@ public class InMemorySessionStoreTests
         var store = new InMemorySessionStore();
         var session = store.Create(CreateDeckWithQuestions(2));
 
-        session.AnswerCurrentQuestion(AnswerOutcome.Correct);
+        session.AnswerCurrentQuestion(0, AnswerOutcome.Correct, 10);
         store.Save(session);
 
         var found = store.Find(session.Id);
