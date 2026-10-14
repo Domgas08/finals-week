@@ -90,7 +90,7 @@ else
     public Guid SessionId { get; set; }
 
     private int CorrectCount =>
-        session!.Answers.Values.Count(o => o == AnswerOutcome.Correct);
+        session!.Answers.Values.Count(o => o.Outcome == AnswerOutcome.Correct);
 
     protected override void OnParametersSet()
     {
@@ -124,7 +124,9 @@ else
         resultView = question.ToPostSubmitViewModel(session.CurrentIndex + 1);
 
         session.AnswerCurrentQuestion(
-            lastResult.IsCorrect ? AnswerOutcome.Correct : AnswerOutcome.Incorrect);
+            selectedIndex.Value,
+            lastResult.IsCorrect ? AnswerOutcome.Correct : AnswerOutcome.Incorrect,
+            lastResult.PointsAwarded);
 
         SessionStore.Save(session);
     }
