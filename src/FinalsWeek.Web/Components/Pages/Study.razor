@@ -1,0 +1,136 @@
+@page "/study/{SessionId:guid}"
+@rendermode InteractiveServer
+@using FinalsWeek.Core
+@using FinalsWeek.Application
+@inject ISessionStore SessionStore
+@inject IDeckStore DeckStore
+@inject NavigationManager Navigation
+
+<PageTitle>Study</PageTitle>
+
+@if (session is null)
+{
+    <h1>Session not found</h1>
+    <p>It may have expired. Start a new one from the deck page.</p>
+    <a href="/decks">Back to decks</a>
+}
+else if (session.IsCompleted && lastResult is null)
+{
+    <h1>Done</h1>
+
+    <p>
+        You answered <strong>@CorrectCount</strong> of
+        <strong>@session.Questions.Count</strong> correctly.
+    </p>
+
+    <a class="btn btn-primary" href="@($"/decks/{session.DeckId}")">Back to deck</a>
+}
+else if (lastResult is null)
+{
+    <h1>@currentView!.Prompt</h1>
+
+    <p class="text-muted">
+        Question @currentView.QuestionNumber of @session.Questions.Count
+    </p>
+
+    @for (var i = 0; i < currentView.Options.Count; i++)
+    {
+        var index = i;
+
+        <div class="form-check mb-2">
+            <input class="form-check-input"
+                   type="radio"
+                   name="answer"
+                   id="@($"option{index}")"
+                   checked="@(selectedIndex == index)"
+                   @onchange="() => selectedIndex = index" />
+
+            <label class="form-check-label" for="@($"option{index}")">
+                @currentView.Options[index]
+            </label>
+        </div>
+    }
+
+    <button class="btn btn-primary mt-3"
+            @onclick="Submit"
+            disabled="@(selectedIndex is null)">
+        Submit
+    </button>
+}
+else
+{
+    <h1>@resultView!.Prompt</h1>
+
+    @if (lastResult.IsCorrect)
+    {
+        <div class="alert alert-success">
+            Correct. +@lastResult.PointsAwarded points.
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            Wrong. The correct answer is <strong>@lastResult.CorrectOption</strong>.
+        </div>
+    }
+
+    <button class="btn btn-primary" @onclick="Next">
+        @(session.IsCompleted ? "Finish" : "Next question")
+    </button>
+}
+
+@code {
+    private StudySession? session;
+    private StudyQuestionViewModel? currentView;
+    private StudyQuestionResultViewModel? resultView;
+    private AnswerGrading? lastResult;
+    private int? selectedIndex;
+
+    [Parameter]
+    public Guid SessionId { get; set; }
+
+    private int CorrectCount =>
+        session!.Answers.Values.Count(o => o == AnswerOutcome.Correct);
+
+    protected override void OnParametersSet()
+    {
+        session = SessionStore.Find(SessionId);
+        ShowCurrentQuestion();
+    }
+
+    private void ShowCurrentQuestion()
+    {
+        currentView = session?.CurrentQuestion?.ToPreSubmitViewModel(session.CurrentIndex + 1);
+        resultView = null;
+        lastResult = null;
+        selectedIndex = null;
+    }
+
+    private void Submit()
+    {
+        if (session is null || selectedIndex is null)
+        {
+            return;
+        }
+
+        var question = session.CurrentQuestion;
+
+        if (question is null)
+        {
+            return;
+        }
+
+        lastResult = AnswerGrader.Grade(question, selectedIndex.Value);
+        resultView = question.ToPostSubmitViewModel(session.CurrentIndex + 1);
+
+        session.AnswerCurrentQuestion(
+            lastResult.IsCorrect ? AnswerOutcome.Correct : AnswerOutcome.Incorrect);
+
+        SessionStore.Save(session);
+    }
+
+    private void Next()
+    {
+        ShowCurrentQuestion();
+    }
+}
