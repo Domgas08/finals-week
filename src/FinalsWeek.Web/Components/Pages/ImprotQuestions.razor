@@ -1,0 +1,169 @@
+@page "/decks/{DeckId:guid}/import"
+@rendermode InteractiveServer
+@using FinalsWeek.Core
+@using FinalsWeek.Application
+@inject NavigationManager Navigation
+@inject IDeckStore DeckStore
+@inject IEnumerable<IQuestionImporter> Importers
+@inject UploadGuard UploadGuard
+
+<PageTitle>Import questions</PageTitle>
+
+@if (deck is null)
+{
+    <h1>Deck not found</h1>
+}
+else
+{
+    <h1>Import questions into @deck.Title</h1>
+
+    <p class="text-muted">
+        Upload a .csv or .json file.
+    </p>
+
+    <div class="mb-4">
+        <InputFile OnChange="LoadFile" class="form-control" />
+    </div>
+
+    @if (error is not null)
+    {
+        <div class="alert alert-danger">@error</div>
+    }
+
+    @if (result is not null)
+    {
+        @if (!result.Success)
+        {
+            <div class="alert alert-danger">@result.FailureReason</div>
+        }
+        else
+        {
+            <p>
+                <strong>@result.Questions.Count</strong> questions will import,
+                <strong>@result.FailedRows.Count</strong> rows failed.
+            </p>
+
+            @if (result.Questions.Count == 0 && result.FailedRows.Count == 0)
+            {
+                <p>The file contains no questions.</p>
+            }
+
+            @if (result.Questions.Count > 0)
+            {
+                <h5>Will import</h5>
+
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Question</th>
+                            <th>Options</th>
+                            <th>Topic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var question in result.Questions)
+                        {
+                            <tr>
+                                <td>@question.Prompt</td>
+                                <td>@string.Join(", ", question.Options)</td>
+                                <td>@(question.Topic ?? "-")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <button class="btn btn-primary mb-3" @onclick="Confirm" disabled="@saving">
+                    Import @result.Questions.Count questions
+                </button>
+            }
+
+            @if (result.FailedRows.Count > 0)
+            {
+                <h5>Failed rows</h5>
+
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Row</th>
+                            <th>Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var failure in result.FailedRows)
+                        {
+                            <tr>
+                                <td>@failure.LineNumber</td>
+                                <td>@failure.Reason</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        }
+    }
+
+    <a href="@($"/decks/{DeckId}")">Back to deck</a>
+}
+
+@code {
+    private Deck? deck;
+    private ImportResult? result;
+    private string? error;
+    private bool saving;
+
+    [Parameter]
+    public Guid DeckId { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        deck = DeckStore.GetById(DeckId);
+    }
+
+    private async Task LoadFile(InputFileChangeEventArgs e)
+    {
+        error = null;
+        result = null;
+
+        var file = e.File;
+
+        var check = UploadGuard.Check(file.Name, file.Size);
+
+        if (!check.Success)
+        {
+            error = check.RejectionReason;
+            return;
+        }
+
+        var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+        var importer = Importers.FirstOrDefault(i => i.Extension == extension);
+
+        if (importer is null)
+        {
+            error = $"No importer for {extension}.";
+            return;
+        }
+
+        using var memory = new MemoryStream();
+        await file.OpenReadStream(file.Size).CopyToAsync(memory);
+        memory.Position = 0;
+
+        result = importer.Import(memory);
+    }
+
+    private void Confirm()
+    {
+        if (saving || result is null)
+        {
+            return;
+        }
+
+        saving = true;
+
+        foreach (var question in result.Questions)
+        {
+            deck!.AddQuestion(question);
+        }
+
+        Navigation.NavigateTo($"/decks/{DeckId}");
+    }
+}
