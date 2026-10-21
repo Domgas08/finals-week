@@ -8,12 +8,12 @@ public class CsvImporter : IQuestionImporter
         "Prompt,Option1,Option2,Option3,Option4,Option5,Option6,CorrectIndex,Topic,TimeLimitSeconds";
 
     public string Extension => ".csv";
-    
-    public DeckImportResult Import(Stream stream)
+
+    public ImportResult Import(Stream stream)
     {
         ArgumentNullException.ThrowIfNull(stream);
 
-        var successfulRows = new List<QuestionRowParsed>();
+        var questions = new List<Question>();
         var failedRows = new List<ImportRowFailure>();
 
         using var reader = new StreamReader(stream, leaveOpen: true);
@@ -22,16 +22,16 @@ public class CsvImporter : IQuestionImporter
 
         if (header is null)
         {
-            return new DeckImportResult(
-                successfulRows,
+            return new ImportResult(
+                questions,
                 failedRows,
                 "The CSV file is empty.");
         }
 
         if (!string.Equals(header.Trim(), ExpectedHeader, StringComparison.OrdinalIgnoreCase))
         {
-            return new DeckImportResult(
-                successfulRows,
+            return new ImportResult(
+                questions,
                 failedRows,
                 "The CSV header is invalid.");
         }
@@ -88,14 +88,14 @@ public class CsvImporter : IQuestionImporter
                     throw new ArgumentException("TimeLimitSeconds must be a number.");
                 }
 
-                var parsedRow = new QuestionRowParsed(
+                var question = new Question(
                     prompt,
                     options,
                     correctIndex,
                     topic,
                     timeLimitSeconds);
 
-                successfulRows.Add(parsedRow);
+                questions.Add(question);
             }
             catch (Exception ex) when (
                 ex is ArgumentException
@@ -106,7 +106,7 @@ public class CsvImporter : IQuestionImporter
             }
         }
 
-        return new DeckImportResult(successfulRows, failedRows);
+        return new ImportResult(questions, failedRows);
     }
 
     private static List<string> ParseCsvLine(string line)
