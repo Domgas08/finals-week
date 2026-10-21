@@ -7,6 +7,8 @@
 @inject IDeckStore DeckStore
 @inject NavigationManager Navigation
 
+<PageTitle>Create deck</PageTitle>
+
 <h1>Create deck</h1>
 
 <EditForm Model="@form" OnSubmit="@SubmitForm">
@@ -39,6 +41,8 @@
     </div>
 
     <button type="submit" class="btn btn-primary">Create</button>
+
+    <a class="ms-2" href="/decks">Cancel</a>
 </EditForm>
 
 @code {
@@ -53,10 +57,8 @@
         {
             var deck = new Deck(
                 form.Title,
-                courseCode: string.IsNullOrWhiteSpace(form.CourseCode)
-                    ? null
-                    : form.CourseCode.Trim(),
-                description: form.Description,
+                courseCode: Normalise(form.CourseCode),
+                description: Normalise(form.Description),
                 visibility: form.Visibility);
 
             DeckStore.Add(deck);
@@ -66,6 +68,11 @@
         {
             error = ex.Message;
         }
+    }
+
+    private static string? Normalise(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
     private class CreateDeckForm

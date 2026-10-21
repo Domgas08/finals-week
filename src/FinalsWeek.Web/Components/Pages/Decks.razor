@@ -29,8 +29,9 @@ else
         @foreach (var deck in decks)
         {
             <li>
-                <strong>@deck.Title</strong>
-
+                <a href="@($"/decks/{deck.Id}")">
+                    <strong>@deck.Title</strong>
+                </a>
                 @if (deck.CourseCode is not null)
                 {
                     <span> — @deck.CourseCode</span>

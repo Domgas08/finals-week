@@ -1,10 +1,14 @@
 namespace FinalsWeek.Application;
 
-public class CsvImporter
+using FinalsWeek.Core;
+
+public class CsvImporter : IQuestionImporter
 {
     private const string ExpectedHeader =
         "Prompt,Option1,Option2,Option3,Option4,Option5,Option6,CorrectIndex,Topic,TimeLimitSeconds";
 
+    public string Extension => ".csv";
+    
     public DeckImportResult Import(Stream stream)
     {
         ArgumentNullException.ThrowIfNull(stream);

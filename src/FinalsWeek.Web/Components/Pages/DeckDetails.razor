@@ -1,0 +1,95 @@
+@page "/decks/{DeckId:guid}"
+@rendermode InteractiveServer
+@using FinalsWeek.Core
+@using FinalsWeek.Application
+@inject IDeckStore DeckStore
+@inject ISessionStore SessionStore
+@inject NavigationManager Navigation
+
+<PageTitle>Deck details</PageTitle>
+
+@if (deck is null)
+{
+    <p>Deck not found.</p>
+    <a href="/decks">Back to decks</a>
+}
+else
+{
+    <h1>@deck.Title</h1>
+    <a href="@($"/decks/{DeckId}/import")">Import questions from a file</a>
+    
+    @if (!string.IsNullOrWhiteSpace(deck.CourseCode))
+    {
+        <p>Course: @deck.CourseCode</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(deck.Description))
+    {
+        <p>@deck.Description</p>
+    }
+
+    <div class="mb-3">
+        @if (HasQuestions)
+        {
+            <button class="btn btn-primary" @onclick="Study">Study</button>
+        }
+        else
+        {
+            <span class="text-muted">Add questions before studying.</span>
+        }
+
+        <a class="ms-2" href="@($"/decks/{DeckId}/questions/add")">Add question</a>
+        <a class="ms-2" href="@($"/decks/{DeckId}/import")">Import questions</a>
+    </div>
+
+    <h2>Questions</h2>
+
+    @if (!HasQuestions)
+    {
+        <p>No questions added yet.</p>
+    }
+    else
+    {
+        <ul>
+            @foreach (var question in deck.Questions)
+            {
+                <li>
+                    <strong>@question.Prompt</strong>
+
+                    @if (!string.IsNullOrWhiteSpace(question.Topic))
+                    {
+                        <span> — @question.Topic</span>
+                    }
+                </li>
+            }
+        </ul>
+    }
+
+    <a href="/decks">Back to decks</a>
+}
+
+@code {
+    [Parameter]
+    public Guid DeckId { get; set; }
+
+    private Deck? deck;
+
+    private bool HasQuestions => deck?.Questions.Count > 0;
+
+    protected override void OnParametersSet()
+    {
+        deck = DeckStore.GetById(DeckId);
+    }
+
+    private void Study()
+    {
+        if (deck is null)
+        {
+            return;
+        }
+
+        var session = SessionStore.FindActive(deck.Id) ?? SessionStore.Create(deck);
+
+        Navigation.NavigateTo($"/study/{session.Id}");
+    }
+}
