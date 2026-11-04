@@ -33,3 +33,8 @@ Finals Week does three things:
 Austėja Likaitė
 Ugnius Kavaliauskas
 Domas Grimalauskas
+
+## Running the database
+
+1. Install Docker Desktop.
+2. From the repo root, run: docker compose up -d
