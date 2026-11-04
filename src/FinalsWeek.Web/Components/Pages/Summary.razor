@@ -1,0 +1,101 @@
+@page "/study/{SessionId:guid}/summary"
+@rendermode InteractiveServer
+
+@using FinalsWeek.Core
+@using FinalsWeek.Application
+
+@inject ISessionStore SessionStore
+@inject NavigationManager Navigation
+
+<PageTitle>Study Session Summary</PageTitle>
+
+<h1>Session Summary</h1>
+
+@if (error is not null)
+{
+    <p style="color: red">@error</p>
+    <p><a href="/decks">Back to decks</a></p>
+}
+else if (summary is null)
+{
+    <p>Loading summary...</p>
+}
+else
+{
+    <p>Total Score: @summary.TotalScore</p>
+    <p>Percentage Correct: @summary.PercentageCorrect% (@summary.CorrectCount / @summary.TotalQuestions correct)</p>
+    <p>Time Taken: @FormatElapsedTime(summary.Elapsed)</p>
+
+    <h2>Breakdown by Topic</h2>
+
+    @foreach (var topicSummary in summary.Topics)
+    {
+        <h4>@topicSummary.Topic (@topicSummary.CorrectCount / @topicSummary.TotalCount correct)</h4>
+        
+        <ul>
+            @foreach (var result in topicSummary.Results)
+            {
+                <li>
+                    <strong>@result.Prompt</strong>
+                    <br />
+                    <span>Your answer: @(result.StudentAnswer ?? "Skipped")</span> | 
+                    <span>Correct answer: @result.CorrectAnswer</span> | 
+                    <span>Outcome: @result.Outcome</span> | 
+                    <span>Points: @result.Points</span>
+                </li>
+            }
+        </ul>
+    }
+
+    <a href="/decks">Back to decks</a>
+}
+
+@code {
+    [Parameter]
+    public Guid SessionId { get; set; }
+
+    private SessionSummary? summary;
+    private string? error;
+
+    protected override void OnParametersSet()
+    {
+        LoadSessionSummary();
+    }
+
+    private void LoadSessionSummary()
+    {
+        summary = null;
+        error = null;
+        var session = SessionStore.Find(SessionId);
+
+        if (session is null)
+        {
+            error = "Study session not found or expired.";
+            return;
+        }
+
+        if (!session.IsCompleted)
+        {
+            Navigation.NavigateTo($"/study/{session.Id}");
+            return;
+        }
+
+        try
+        {
+            summary = SessionSummaryCalculator.Summarise(session);
+        }
+        catch
+        {
+            error = $"An error occurred while generating the summary.";
+        }
+    }
+
+    private static string FormatElapsedTime(TimeSpan elapsed)
+    {
+        if (elapsed.TotalMinutes >= 1)
+        {
+            return $"{(int)elapsed.TotalMinutes}m {elapsed.Seconds}s";
+        }
+        return $"{elapsed.Seconds}s";
+    }
+}

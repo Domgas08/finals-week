@@ -23,7 +23,10 @@ else if (session.IsCompleted && lastResult is null)
         <strong>@session.Questions.Count</strong> correctly.
     </p>
 
-    <a class="btn btn-primary" href="@($"/decks/{session.DeckId}")">Back to deck</a>
+    <div class="mt-3">
+        <a class="btn btn-primary me-2" href="@($"/study/{session.Id}/summary")">View Summary</a>
+        <a class="btn btn-secondary" href="@($"/decks/{session.DeckId}")">Back to deck</a>
+    </div>
 }
 else if (lastResult is null)
 {
