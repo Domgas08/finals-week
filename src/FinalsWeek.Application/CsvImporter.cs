@@ -66,6 +66,11 @@ public class CsvImporter : IQuestionImporter
                     .Where(option => !string.IsNullOrWhiteSpace(option))
                     .ToList();
 
+                if (options.Count < 2)
+                {
+                    throw new ArgumentException("A question must have at least 2 options.");
+                }
+
                 if (!int.TryParse(columns[7], out var correctIndex))
                 {
                     throw new ArgumentException("CorrectIndex must be a number.");
