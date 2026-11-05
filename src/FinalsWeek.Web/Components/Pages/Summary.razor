@@ -5,11 +5,17 @@
 @using FinalsWeek.Application
 
 @inject ISessionStore SessionStore
+@inject IDeckStore DeckStore
 @inject NavigationManager Navigation
 
 <PageTitle>Study Session Summary</PageTitle>
 
 <h1>Session Summary</h1>
+
+@if (DeckTitle is not null)
+{
+    <p>Deck: <strong>@DeckTitle</strong></p>
+}
 
 @if (error is not null)
 {
@@ -56,6 +62,7 @@ else
 
     private SessionSummary? summary;
     private string? error;
+    private string? DeckTitle { get; set; }
 
     protected override void OnParametersSet()
     {
@@ -66,6 +73,8 @@ else
     {
         summary = null;
         error = null;
+        DeckTitle = null;
+
         var session = SessionStore.Find(SessionId);
 
         if (session is null)
@@ -80,14 +89,10 @@ else
             return;
         }
 
-        try
-        {
-            summary = SessionSummaryCalculator.Summarise(session);
-        }
-        catch
-        {
-            error = $"An error occurred while generating the summary.";
-        }
+        var deck = DeckStore.GetById(session.DeckId);
+        DeckTitle = deck?.Title;
+
+        summary = SessionSummaryCalculator.Summarise(session);
     }
 
     private static string FormatElapsedTime(TimeSpan elapsed)
