@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: finalsuser
+      POSTGRES_PASSWORD: isitmyfinalweek
+      POSTGRES_DB: finals-week
+    ports:
+      - "5432:5432"
+    volumes:
+      - finals-data:/var/lib/postgresql/data
+
+volumes:
+  finals-data:
