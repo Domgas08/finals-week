@@ -11,4 +11,6 @@ public interface ISessionStore
     StudySession? Find(Guid sessionId);
 
     void Save(StudySession session);
+
+    IReadOnlyList<StudySession> GetFinished();
 }

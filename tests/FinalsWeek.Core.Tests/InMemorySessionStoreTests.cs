@@ -102,6 +102,51 @@ public class InMemorySessionStoreTests
         Assert.Equal("session", ex.ParamName);
     }
 
+    [Fact]
+    public void GetFinished_UnfinishedSession_IsNotListed()
+    {
+        var store = new InMemorySessionStore();
+        var session = store.Create(CreateDeckWithQuestions(2));
+
+        session.AnswerCurrentQuestion(0, AnswerOutcome.Correct, 10);
+        store.Save(session);
+
+        Assert.Empty(store.GetFinished());
+    }
+
+    [Fact]
+    public void GetFinished_ReturnsMostRecentlyFinishedFirst()
+    {
+        var store = new InMemorySessionStore();
+
+        var older = store.Create(CreateDeckWithQuestions(1));
+        older.AnswerCurrentQuestion(0, AnswerOutcome.Correct, 10);
+        store.Save(older);
+
+        Thread.Sleep(20);
+
+        var newer = store.Create(CreateDeckWithQuestions(1));
+        newer.AnswerCurrentQuestion(0, AnswerOutcome.Correct, 10);
+        store.Save(newer);
+
+        var finished = store.GetFinished();
+
+        Assert.Equal(2, finished.Count);
+        Assert.Same(newer, finished[0]);
+        Assert.Same(older, finished[1]);
+    }
+
+    [Fact]
+    public void GetFinished_EmptyStore_ReturnsEmptyList()
+    {
+        var store = new InMemorySessionStore();
+
+        var finished = store.GetFinished();
+
+        Assert.NotNull(finished);
+        Assert.Empty(finished);
+    }
+
     private static Deck CreateDeckWithQuestions(int count)
     {
         var deck = new Deck("Test deck");

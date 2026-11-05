@@ -1,0 +1,54 @@
+@page "/history"
+@using FinalsWeek.Core
+@using FinalsWeek.Application
+@inject ISessionStore SessionStore
+@inject IDeckStore DeckStore
+
+<PageTitle>History</PageTitle>
+
+<h1>History</h1>
+
+@if (entries.Count == 0)
+{
+    <p class="text-muted">You have not finished a session yet.</p>
+    <a class="btn btn-primary" href="/decks">Pick a deck</a>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Deck</th>
+                <th>Score</th>
+                <th>Correct</th>
+                <th>Finished</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var entry in entries)
+            {
+                <tr>
+                    <td>@entry.DeckTitle</td>
+                    <td>@entry.Score</td>
+                    <td>@entry.CorrectCount / @entry.TotalQuestions</td>
+                    <td>@entry.FinishedAt.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <a href="@($"/study/{entry.SessionId}/summary")">Summary</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<SessionHistoryEntry> entries = new();
+
+    protected override void OnInitialized()
+    {
+        entries = SessionStore.GetFinished()
+            .Select(s => s.ToHistoryEntry(DeckStore.GetById(s.DeckId)?.Title ?? "Deleted deck"))
+            .ToList();
+    }
+}

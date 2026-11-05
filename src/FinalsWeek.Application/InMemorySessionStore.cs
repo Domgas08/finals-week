@@ -38,4 +38,12 @@ public class InMemorySessionStore : ISessionStore
         ArgumentNullException.ThrowIfNull(session);
         sessions[session.Id] = session;
     }
+
+    public IReadOnlyList<StudySession> GetFinished()
+    {
+        return sessions.Values
+            .Where(s => s.FinishedAt is not null)
+            .OrderByDescending(s => s.FinishedAt)
+            .ToList();
+    }
 }
