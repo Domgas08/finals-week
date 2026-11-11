@@ -22,9 +22,14 @@ public record Question
         Id = Guid.NewGuid();
     }
 
-    public string Prompt { get; private init; }
+    private Question()
+    {
+    }
 
-    public IReadOnlyList<string> Options { get; private init; }
+    // per StyleCop warning CS8618
+    public string Prompt { get; private init; } = string.Empty;
+
+    public IReadOnlyList<string> Options { get; private init; } = [];
 
     public int CorrectIndex { get; private init; }
 

@@ -11,7 +11,9 @@
 <div class="mb-4">
     <input @bind="newTitle" placeholder="Pavadinimas" />
     <input @bind="newCourseCode" placeholder="Kurso kodas (nebūtina)" />
-    <button @onclick="CreateDeck">Sukurti</button>
+    <button @onclick="CreateDeck" disabled="@saving">
+        @(saving ? "Kuriamas..." : "Sukurti")
+    </button>
 </div>
 
 @if (error is not null)
@@ -19,7 +21,11 @@
     <p style="color: red">@error</p>
 }
 
-@if (decks.Count == 0)
+@if (isLoading)
+{
+    <p>Kraunasi deck'ai...</p>
+}
+else if (decks.Count == 0)
 {
     <p>Kol kas neturite nė vieno deck'o. Sukurkite pirmą.</p>
 }
@@ -55,15 +61,25 @@ else
     private string newTitle = string.Empty;
     private string newCourseCode = string.Empty;
     private string? error;
+    private bool isLoading = true;
+    private bool saving;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        decks = DeckStore.GetAll();
+        isLoading = true;
+        decks = await DeckStore.GetAllAsync();
+        isLoading = false;
     }
 
-    private void CreateDeck()
+    private async Task CreateDeck()
     {
+        if (saving)
+        {
+            return;
+        }
+
         error = null;
+        saving = true;
 
         try
         {
@@ -71,15 +87,20 @@ else
                 ? null
                 : newCourseCode.Trim();
 
-            DeckStore.Add(new Deck(newTitle, courseCode: courseCode));
+            var deck = new Deck(newTitle, courseCode: courseCode);
+            await DeckStore.AddAsync(deck);
 
             newTitle = string.Empty;
             newCourseCode = string.Empty;
-            decks = DeckStore.GetAll();
+            decks = await DeckStore.GetAllAsync();
         }
         catch (ArgumentException ex)
         {
             error = ex.Message;
+        }
+        finally
+        {
+            saving = false;
         }
     }
 }

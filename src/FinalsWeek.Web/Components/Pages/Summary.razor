@@ -64,12 +64,12 @@ else
     private string? error;
     private string? DeckTitle { get; set; }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
-        LoadSessionSummary();
+        await LoadSessionSummaryAsync();
     }
 
-    private void LoadSessionSummary()
+    private async Task LoadSessionSummaryAsync()
     {
         summary = null;
         error = null;
@@ -89,7 +89,7 @@ else
             return;
         }
 
-        var deck = DeckStore.GetById(session.DeckId);
+        var deck = await DeckStore.GetByIdAsync(session.DeckId);
         DeckTitle = deck?.Title;
 
         summary = SessionSummaryCalculator.Summarise(session);
