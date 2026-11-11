@@ -1,5 +1,6 @@
 using FinalsWeek.Application;
 using FinalsWeek.Web.Components;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,15 +9,15 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddSingleton<IDeckStore, InMemoryDeckStore>();
-builder.Services.AddSingleton<ISessionStore, InMemorySessionStore>();
 
-var maxUploadSize = builder.Configuration.GetValue<long>("Upload:MaxSizeInBytes");
-builder.Services.AddSingleton(new UploadGuard(maxUploadSize));
-
-builder.Services.AddSingleton<IQuestionImporter, CsvImporter>();
-builder.Services.AddSingleton<IQuestionImporter, JsonImporter>();
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
 var app = builder.Build();
+using var scope = app.Services.CreateScope();
+var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+db.Database.Migrate();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
