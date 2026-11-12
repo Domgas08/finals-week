@@ -1,6 +1,6 @@
 using FinalsWeek.Application;
-using Microsoft.AspNetCore.Identity;
 using FinalsWeek.Web.Components;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,8 +9,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddSingleton<IDeckStore,InMemoryDeckStore>();
+builder.Services.AddSingleton<IDeckStore, InMemoryDeckStore>();
 builder.Services.AddSingleton<ISessionStore, InMemorySessionStore>();
+builder.Services.AddSingleton(sp => new UploadGuard(
+    builder.Configuration.GetValue<long>("Upload:MaxSizeInBytes", 10485760)));
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -18,12 +20,14 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connect
 
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
-options.Password.RequiredLength = 8;
-options.Password.RequireDigit = true;
-options.Password.RequireUppercase = true;
-options.Password.RequireLowercase = true;
-options.Password.RequireNonAlphanumeric = true;
-options.User.RequireUniqueEmail = true; }).AddEntityFrameworkStores<AppDbContext>();
+    options.Password.RequiredLength = 8;
+    options.Password.RequireDigit = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.User.RequireUniqueEmail = true;
+    })
+    .AddEntityFrameworkStores<AppDbContext>();
 
 var app = builder.Build();
 using var scope = app.Services.CreateScope();

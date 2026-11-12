@@ -40,13 +40,16 @@
 
         var user = new AppUser { UserName = model.Email, Email = model.Email };
         var result = await UserManager.CreateAsync(user, model.Password);
-        if (result.Succeeded){
+        if (result.Succeeded)
+        {
             success = true;
+        }
+        else
+        {
+            foreach (var error in result.Errors)
+            {
+                errors.Add(error.Description);
             }
-        else{
-            foreach (var error in result.Errors){
-    errors.Add(error.Description);
-    }
         }
     }
 

@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FinalsWeek.Application.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261111182625_IdentityLenteles")]
-    partial class IdentityLenteles
+    [Migration("20261111182625_IdentityTables")]
+    partial class IdentityTables
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
