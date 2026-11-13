@@ -8,7 +8,11 @@
 
 <PageTitle>Deck details</PageTitle>
 
-@if (deck is null)
+@if (isLoading)
+{
+    <p>Loading deck details...</p>
+}
+else if (deck is null)
 {
     <p>Deck not found.</p>
     <a href="/decks">Back to decks</a>
@@ -73,12 +77,15 @@ else
     public Guid DeckId { get; set; }
 
     private Deck? deck;
+    private bool isLoading = true;
 
     private bool HasQuestions => deck?.Questions.Count > 0;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
-        deck = DeckStore.GetById(DeckId);
+        isLoading = true;
+        deck = await DeckStore.GetByIdAsync(DeckId);
+        isLoading = false;
     }
 
     private void Study()

@@ -1,4 +1,5 @@
 @page "/history"
+@rendermode InteractiveServer
 @using FinalsWeek.Core
 @using FinalsWeek.Application
 @inject ISessionStore SessionStore
@@ -8,7 +9,11 @@
 
 <h1>History</h1>
 
-@if (entries.Count == 0)
+@if (isLoading)
+{
+    <p>Loading history...</p>
+}
+else if (entries.Count == 0)
 {
     <p class="text-muted">You have not finished a session yet.</p>
     <a class="btn btn-primary" href="/decks">Pick a deck</a>
@@ -44,11 +49,22 @@ else
 
 @code {
     private List<SessionHistoryEntry> entries = new();
+    private bool isLoading = true;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        entries = SessionStore.GetFinished()
-            .Select(s => s.ToHistoryEntry(DeckStore.GetById(s.DeckId)?.Title ?? "Deleted deck"))
-            .ToList();
+        isLoading = true;
+        var finishedSessions = SessionStore.GetFinished();
+
+        var tempEntries = new List<SessionHistoryEntry>();
+
+        foreach (var session in finishedSessions)
+        {
+            var deck = await DeckStore.GetByIdAsync(session.DeckId);
+            tempEntries.Add(session.ToHistoryEntry(deck?.Title ?? "Deleted deck"));
+        }
+
+        entries = tempEntries;
+        isLoading = false;
     }
 }

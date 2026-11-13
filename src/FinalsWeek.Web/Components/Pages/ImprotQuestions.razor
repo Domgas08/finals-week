@@ -9,7 +9,11 @@
 
 <PageTitle>Import questions</PageTitle>
 
-@if (deck is null)
+@if (isLoading)
+{
+    <p>Loading deck...</p>
+}
+else if (deck is null)
 {
     <h1>Deck not found</h1>
 }
@@ -73,7 +77,7 @@ else
                 </table>
 
                 <button class="btn btn-primary mb-3" @onclick="Confirm" disabled="@saving">
-                    Import @result.Questions.Count questions
+                    @(saving ? "Importing..." : $"Import {result.Questions.Count} questions")
                 </button>
             }
 
@@ -109,14 +113,17 @@ else
     private Deck? deck;
     private ImportResult? result;
     private string? error;
+    private bool isLoading = true;
     private bool saving;
 
     [Parameter]
     public Guid DeckId { get; set; }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
-        deck = DeckStore.GetById(DeckId);
+        isLoading = true;
+        deck = await DeckStore.GetByIdAsync(DeckId);
+        isLoading = false;
     }
 
     private async Task LoadFile(InputFileChangeEventArgs e)
@@ -150,20 +157,29 @@ else
         result = importer.Import(memory);
     }
 
-    private void Confirm()
+    private async Task Confirm()
     {
-        if (saving || result is null)
+        if (saving || result is null || deck is null)
         {
             return;
         }
 
         saving = true;
 
-        foreach (var question in result.Questions)
+        try
         {
-            deck!.AddQuestion(question);
-        }
+            foreach (var question in result.Questions)
+            {
+                deck.AddQuestion(question);
+            }
 
-        Navigation.NavigateTo($"/decks/{DeckId}");
+            await DeckStore.UpdateAsync(deck);
+            Navigation.NavigateTo($"/decks/{DeckId}");
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            saving = false;
+        }
     }
 }
