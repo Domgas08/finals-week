@@ -1,5 +1,6 @@
 using FinalsWeek.Application;
 using FinalsWeek.Web.Components;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,9 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddSingleton<ISessionStore, InMemorySessionStore>();
+builder.Services.AddSingleton(sp => new UploadGuard(
+    builder.Configuration.GetValue<long>("Upload:MaxSizeInBytes", 10 * 1024 * 1024)));
+builder.Services.AddScoped<IDeckStore, SqlDeckStore>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -23,11 +27,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
             errorCodesToAdd: null);
     }));
 
-// Configure Services as Scoped
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
-
-builder.Services.AddScoped<IDeckStore, SqlDeckStore>();
-builder.Services.AddScoped<UploadGuard>(sp => new UploadGuard(10 * 1024 * 1024));
+builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
+{
+    options.Password.RequiredLength = 8;
+    options.Password.RequireDigit = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.User.RequireUniqueEmail = true;
+    })
+    .AddEntityFrameworkStores<AppDbContext>();
 
 var app = builder.Build();
 
@@ -65,7 +74,8 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapStaticAssets();

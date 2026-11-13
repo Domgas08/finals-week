@@ -40,7 +40,7 @@ public class SqlDeckStore(AppDbContext context) : IDeckStore
     {
         var deck = await this.context.Decks
             .Include(d => d.Questions)
-            .FirstOrDefaultAsync(d => d.Id == deckId) 
+            .FirstOrDefaultAsync(d => d.Id == deckId)
             ?? throw new KeyNotFoundException("Deck not found");
 
         deck.AddQuestion(question);
