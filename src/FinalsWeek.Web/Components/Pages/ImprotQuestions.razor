@@ -168,12 +168,7 @@ else
 
         try
         {
-            foreach (var question in result.Questions)
-            {
-                deck.AddQuestion(question);
-            }
-
-            await DeckStore.UpdateAsync(deck);
+            await DeckStore.AddQuestionsToDeckAsync(DeckId, result.Questions);
             Navigation.NavigateTo($"/decks/{DeckId}");
         }
         catch (Exception ex)

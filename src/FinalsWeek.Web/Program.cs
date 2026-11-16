@@ -13,6 +13,8 @@ builder.Services.AddSingleton<ISessionStore, InMemorySessionStore>();
 builder.Services.AddSingleton(sp => new UploadGuard(
     builder.Configuration.GetValue<long>("Upload:MaxSizeInBytes", 10 * 1024 * 1024)));
 builder.Services.AddScoped<IDeckStore, SqlDeckStore>();
+builder.Services.AddTransient<IQuestionImporter, JsonImporter>();
+builder.Services.AddTransient<IQuestionImporter, CsvImporter>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");

@@ -12,5 +12,7 @@ public interface IDeckStore
 
     Task UpdateAsync(Deck deck);
 
+    Task AddQuestionsToDeckAsync(Guid deckId, IEnumerable<Question> questions);
+
     Task AddQuestionToDeckAsync(Guid deckId, Question question);
 }

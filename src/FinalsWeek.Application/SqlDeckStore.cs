@@ -31,9 +31,9 @@ public class SqlDeckStore(AppDbContext context) : IDeckStore
 
     public async Task UpdateAsync(Deck deck)
     {
-    ArgumentNullException.ThrowIfNull(deck);
-    this.context.Decks.Update(deck);
-    await this.context.SaveChangesAsync();
+        ArgumentNullException.ThrowIfNull(deck);
+        this.context.Decks.Update(deck);
+        await this.context.SaveChangesAsync();
     }
 
     public async Task AddQuestionToDeckAsync(Guid deckId, Question question)
@@ -44,6 +44,23 @@ public class SqlDeckStore(AppDbContext context) : IDeckStore
             ?? throw new KeyNotFoundException("Deck not found");
 
         deck.AddQuestion(question);
+        await this.context.SaveChangesAsync();
+    }
+
+    public async Task AddQuestionsToDeckAsync(Guid deckId, IEnumerable<Question> questions)
+    {
+        ArgumentNullException.ThrowIfNull(questions);
+
+        var deck = await this.context.Decks
+            .Include(d => d.Questions)
+            .FirstOrDefaultAsync(d => d.Id == deckId)
+            ?? throw new KeyNotFoundException("Deck not found");
+
+        foreach (var question in questions)
+        {
+            deck.AddQuestion(question);
+        }
+
         await this.context.SaveChangesAsync();
     }
 }
