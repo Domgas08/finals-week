@@ -40,7 +40,9 @@
         </InputSelect>
     </div>
 
-    <button type="submit" class="btn btn-primary">Create</button>
+    <button type="submit" class="btn btn-primary" disabled="@saving">
+        @(saving ? "Creating..." : "Create")
+    </button>
 
     <a class="ms-2" href="/decks">Cancel</a>
 </EditForm>
@@ -48,10 +50,17 @@
 @code {
     private CreateDeckForm form = new();
     private string? error;
+    private bool saving;
 
-    private void SubmitForm()
+    private async Task SubmitForm()
     {
+        if (saving)
+        {
+            return;
+        }
+
         error = null;
+        saving = true;
 
         try
         {
@@ -61,12 +70,13 @@
                 description: Normalise(form.Description),
                 visibility: form.Visibility);
 
-            DeckStore.Add(deck);
+            await DeckStore.AddAsync(deck);
             Navigation.NavigateTo("/decks");
         }
         catch (ArgumentException ex)
         {
             error = ex.Message;
+            saving = false;
         }
     }
 
