@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using FinalsWeek.Application;
 using FinalsWeek.Web.Components;
 using Microsoft.AspNetCore.Identity;
@@ -39,6 +40,15 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
     options.User.RequireUniqueEmail = true;
     })
     .AddEntityFrameworkStores<AppDbContext>();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/login";
+    options.LogoutPath = "/logout";
+    options.AccessDeniedPath = "/login";
+});
+
+builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
 
@@ -83,5 +93,11 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+app.MapPost("/logout", async (SignInManager<AppUser> signInManager, [FromForm] string? returnUrl) =>
+{
+    await signInManager.SignOutAsync();
+    return Results.LocalRedirect(string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl);
+});
 
 app.Run();
