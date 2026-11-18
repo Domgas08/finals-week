@@ -35,7 +35,6 @@ public class SqlSessionStore(AppDbContext context) : ISessionStore
     {
         ArgumentNullException.ThrowIfNull(session);
 
-        context.StudySessions.Update(session);
         await context.SaveChangesAsync();
     }
 
