@@ -4,13 +4,13 @@ using FinalsWeek.Core;
 
 public interface ISessionStore
 {
-    StudySession? FindActive(Guid deckId);
+    Task<StudySession?> FindActiveAsync(Guid deckId);
 
-    StudySession Create(Deck deck);
+    Task<StudySession> CreateAsync(Deck deck);
 
-    StudySession? Find(Guid sessionId);
+    Task<StudySession?> FindAsync(Guid sessionId);
 
-    void Save(StudySession session);
+    Task SaveAsync(StudySession session);
 
-    IReadOnlyList<StudySession> GetFinished();
+    Task<IReadOnlyList<StudySession>> GetFinishedAsync();
 }
