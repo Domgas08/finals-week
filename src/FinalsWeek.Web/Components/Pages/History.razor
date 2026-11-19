@@ -54,7 +54,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         isLoading = true;
-        var finishedSessions = SessionStore.GetFinished();
+        var finishedSessions = await SessionStore.GetFinishedAsync();
 
         var tempEntries = new List<SessionHistoryEntry>();
 

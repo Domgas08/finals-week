@@ -2,7 +2,8 @@ namespace FinalsWeek.Core;
 
 public class StudySession
 {
-    private readonly Dictionary<int, SessionAnswer> answers = new();
+    private readonly List<Question> questions = new();
+    private readonly List<SessionAnswer> answers = new();
 
     public StudySession(Guid deckId, IReadOnlyList<Question> questions)
     {
@@ -10,24 +11,40 @@ public class StudySession
 
         Id = Guid.NewGuid();
         DeckId = deckId;
-        Questions = questions.ToArray();
         CurrentIndex = 0;
         StartedAt = DateTimeOffset.UtcNow;
+
+        foreach (var q in questions)
+        {
+            var clone = new Question(
+                prompt: q.Prompt,
+                options: q.Options,
+                correctIndex: q.CorrectIndex,
+                topic: q.Topic,
+                timeLimitSeconds: q.TimeLimitSeconds);
+            this.questions.Add(clone);
+        }
     }
 
-    public Guid DeckId { get; }
+    private StudySession()
+    {
+    }
 
-    public Guid Id { get; }
+    public Guid DeckId { get; private set; }
 
-    public IReadOnlyList<Question> Questions { get; }
+    public Guid Id { get; private set; }
+
+    public IReadOnlyList<Question> Questions => questions.AsReadOnly();
 
     public int CurrentIndex { get; private set; }
 
-    public DateTimeOffset StartedAt { get; }
+    public DateTimeOffset StartedAt { get; private set; }
 
     public DateTimeOffset? FinishedAt { get; private set; }
 
-    public IReadOnlyDictionary<int, SessionAnswer> Answers => answers;
+
+    public IReadOnlyDictionary<int, SessionAnswer> Answers => 
+        answers.ToDictionary(a => a.QuestionIndex, a => a);
 
     public SessionProgress Progress => new(answers.Count, Questions.Count);
 
@@ -48,7 +65,8 @@ public class StudySession
             throw new InvalidOperationException("Session is already completed.");
         }
 
-        answers[CurrentIndex] = new SessionAnswer(selectedOptionIndex, outcome, pointsAwarded);
+        answers.RemoveAll(a => a.QuestionIndex == CurrentIndex);
+        answers.Add(new SessionAnswer(CurrentIndex, selectedOptionIndex, outcome, pointsAwarded));
         CurrentIndex++;
 
         if (IsCompleted)
@@ -64,7 +82,8 @@ public class StudySession
             throw new InvalidOperationException("Session is already completed.");
         }
 
-        answers[CurrentIndex] = new SessionAnswer(null, AnswerOutcome.Skipped, 0);
+        answers.RemoveAll(a => a.QuestionIndex == CurrentIndex);
+        answers.Add(new SessionAnswer(CurrentIndex, null, AnswerOutcome.Skipped, 0));
         CurrentIndex++;
 
         if (IsCompleted)

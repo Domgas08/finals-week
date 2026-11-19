@@ -88,14 +88,14 @@ else
         isLoading = false;
     }
 
-    private void Study()
+    private async Task Study()
     {
         if (deck is null)
         {
             return;
         }
 
-        var session = SessionStore.FindActive(deck.Id) ?? SessionStore.Create(deck);
+        var session = await SessionStore.FindActiveAsync(deck.Id) ?? await SessionStore.CreateAsync(deck);
 
         Navigation.NavigateTo($"/study/{session.Id}");
     }
