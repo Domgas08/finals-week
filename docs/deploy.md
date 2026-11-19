@@ -71,15 +71,77 @@ Only `web` is rebuilt. The database and the login keys are kept, so nobody loses
 
 ## Automatic updates
 
-The server checks GitHub every minute. When `main` has a new commit, it pulls it and runs the same `up -d --build` command as above. A merged PR is live a few minutes later.
+Both ways below run the same script, `deploy/auto-update.sh`. It fetches `main` from GitHub. If the server is not on the newest commit, it moves to it and runs `up -d --build`. If the build fails, the old version keeps running.
 
-How it works:
+Use **one** of the two ways, not both. The timer deploys every new commit, even one whose tests failed.
 
-- `deploy/auto-update.sh` does the check and the update. If the build fails, the old version keeps running.
-- `deploy/finals-week-update.timer` runs it every minute, through `deploy/finals-week-update.service`.
-- The server only talks to GitHub. GitHub cannot run anything on the server, and no port is opened.
+Both need the hosting PR merged into `main` first, because the script deploys `main`.
+With either one on, do not edit tracked files on the server. Every update resets the checkout to match GitHub. `deploy/.env` is not tracked, so it is safe.
 
-Install it once. The hosting PR must be merged into `main` first, because the script deploys `main`.
+### Way A (recommended): deploy from GitHub through n8n
+
+After a merge to `main`, the CI workflow builds and runs the tests. Only if they pass, its `deploy` job calls an n8n webhook. n8n answers at once and runs the script on the server over SSH.
+GitHub reaches n8n through n8n's own Cloudflare Tunnel, so no port is opened. The SSH key n8n uses can only run the deploy script, nothing else.
+
+**1. A deploy-only SSH key (on the server):**
+
+```
+ssh-keygen -t ed25519 -N "" -C n8n-deploy -f ~/n8n-deploy-key
+echo "command=\"bash /home/ubuntu/projects/finals-week/deploy/auto-update.sh\",no-port-forwarding,no-pty,no-agent-forwarding,no-X11-forwarding $(cat ~/n8n-deploy-key.pub)" >> ~/.ssh/authorized_keys
+```
+
+The `command="..."` part means: whoever logs in with this key runs the deploy script and is logged out. They get no shell.
+
+Test it. It should run the script and return without a shell:
+
+```
+ssh -i ~/n8n-deploy-key ubuntu@localhost
+```
+
+Print the private key, copy it into n8n in the next step, then delete both key files:
+
+```
+cat ~/n8n-deploy-key
+rm ~/n8n-deploy-key ~/n8n-deploy-key.pub
+```
+
+**2. A random token for the webhook:**
+
+```
+openssl rand -hex 32
+```
+
+**3. The workflow in n8n.** Create a new workflow `finals-week-deploy` with two nodes:
+
+- **Webhook**
+  - HTTP Method: `POST`
+  - Path: `finals-week-deploy`
+  - Authentication: **Header Auth**. New credential: Name `X-Deploy-Token`, Value: the token from step 2.
+  - Respond: **Immediately**. The build takes minutes, and Cloudflare cuts requests that wait longer than about 100 seconds.
+- **SSH** (connected after the Webhook)
+  - Operation: Execute Command. Command: `deploy` (any text works, the key always runs the script).
+  - New credential, type **Private Key**: Host: the server's LAN IP (`hostname -I`, first address), Port `22`, Username `ubuntu`, Private Key: the key from step 1.
+    If n8n runs in Docker on this same VM, `localhost` will not work, because it means the n8n container.
+
+Activate the workflow. Copy the webhook's **Production URL**, for example `https://<n8n domain>/webhook/finals-week-deploy`.
+
+**4. GitHub secrets.** Repository → Settings → Secrets and variables → Actions → New repository secret:
+
+- `DEPLOY_WEBHOOK_URL`: the Production URL from step 3
+- `DEPLOY_WEBHOOK_TOKEN`: the token from step 2
+
+Until `DEPLOY_WEBHOOK_URL` is set, the `deploy` job only prints that nothing was deployed.
+
+**Check it:** after the next merge, the Actions tab shows a `deploy` job after `build-and-test`. n8n → Executions shows the run, with the script's output in the SSH node.
+
+**If the deploy job fails:**
+- **403 from Cloudflare:** the n8n domain is protected (Cloudflare Access, or bot protection). Allow the path `/webhook/finals-week-deploy`.
+- **403 from n8n:** the token in GitHub and in the n8n credential differ.
+- **404:** the workflow is not active, or the URL is the Test URL instead of the Production URL.
+
+### Way B: the server checks GitHub every minute
+
+No n8n and no secrets. The server itself checks `main` every minute. It does not wait for the tests.
 
 ```
 cd ~/projects/finals-week
@@ -88,21 +150,16 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now finals-week-update.timer
 ```
 
-The service file expects the repo in `/home/ubuntu/projects/finals-week` and runs as the user `ubuntu`. If that changes, edit `User=` and `ExecStart=` in `/etc/systemd/system/finals-week-update.service`.
+The service expects the repo in `/home/ubuntu/projects/finals-week` and runs as `ubuntu`. If that changes, edit `User=` and `ExecStart=` in `/etc/systemd/system/finals-week-update.service`.
 
-Check it:
+Check it with `systemctl list-timers finals-week-update.timer` and `journalctl -u finals-week-update -f`.
+Turn it off with `sudo systemctl disable --now finals-week-update.timer`.
+
+### Deploy right now, by hand
 
 ```
-systemctl list-timers finals-week-update.timer
-journalctl -u finals-week-update -f
+bash ~/projects/finals-week/deploy/auto-update.sh
 ```
-
-The first command shows when it runs next. The second shows what each run did. A run with nothing new prints nothing.
-
-To deploy right now without waiting: `bash deploy/auto-update.sh`.
-To stop automatic updates: `sudo systemctl disable --now finals-week-update.timer`.
-
-With automatic updates on, do not edit tracked files on the server. Every update resets the checkout to match GitHub. `deploy/.env` is not tracked, so it is safe.
 
 ## Looking at logs
 
