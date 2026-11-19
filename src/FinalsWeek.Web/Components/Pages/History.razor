@@ -1,8 +1,10 @@
 @page "/history"
 @rendermode InteractiveServer
+@attribute [Authorize]
 @using FinalsWeek.Core
 @using FinalsWeek.Application
 @inject ISessionStore SessionStore
+@inject CurrentUser CurrentUser
 @inject IDeckStore DeckStore
 
 <PageTitle>History</PageTitle>
@@ -50,9 +52,11 @@ else
 @code {
     private List<SessionHistoryEntry> entries = new();
     private bool isLoading = true;
+    private string? userId;
 
     protected override async Task OnInitializedAsync()
     {
+        userId = await CurrentUser.GetIdAsync();
         isLoading = true;
         var finishedSessions = SessionStore.GetFinished();
 
@@ -60,7 +64,7 @@ else
 
         foreach (var session in finishedSessions)
         {
-            var deck = await DeckStore.GetByIdAsync(session.DeckId);
+            var deck = await DeckStore.GetByIdAsync(session.DeckId, userId);
             tempEntries.Add(session.ToHistoryEntry(deck?.Title ?? "Deleted deck"));
         }
 

@@ -1,10 +1,11 @@
 @page "/study/{SessionId:guid}/summary"
 @rendermode InteractiveServer
-
+@attribute [Authorize]
 @using FinalsWeek.Core
 @using FinalsWeek.Application
 
 @inject ISessionStore SessionStore
+@inject CurrentUser CurrentUser
 @inject IDeckStore DeckStore
 @inject NavigationManager Navigation
 
@@ -63,6 +64,7 @@ else
     private SessionSummary? summary;
     private string? error;
     private string? DeckTitle { get; set; }
+    private string? userId;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -71,6 +73,7 @@ else
 
     private async Task LoadSessionSummaryAsync()
     {
+        userId = await CurrentUser.GetIdAsync();
         summary = null;
         error = null;
         DeckTitle = null;
@@ -89,7 +92,7 @@ else
             return;
         }
 
-        var deck = await DeckStore.GetByIdAsync(session.DeckId);
+        var deck = await DeckStore.GetByIdAsync(session.DeckId, userId);
         DeckTitle = deck?.Title;
 
         summary = SessionSummaryCalculator.Summarise(session);

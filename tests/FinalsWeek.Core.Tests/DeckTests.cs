@@ -106,4 +106,110 @@ public class DeckTests
     {
         return new Question("Kiek bus 2 + 2?", new List<string> { "3", "4" }, 1);
     }
+
+    [Fact]
+    public void NewDeck_HasNoOwner()
+    {
+        var deck = new Deck("Matematika");
+
+        Assert.Null(deck.OwnerId);
+    }
+
+    [Fact]
+    public void AssignOwner_WithValidId_RecordsOwner()
+    {
+        var deck = new Deck("Matematika");
+
+        deck.AssignOwner("user-a");
+
+        Assert.Equal("user-a", deck.OwnerId);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void AssignOwner_WithBlankId_ThrowsArgumentException(string ownerId)
+    {
+        var deck = new Deck("Matematika");
+
+        Assert.Throws<ArgumentException>(() => deck.AssignOwner(ownerId));
+        Assert.Null(deck.OwnerId);
+    }
+
+    [Fact]
+    public void AssignOwner_WithNullId_ThrowsArgumentNullException()
+    {
+        var deck = new Deck("Matematika");
+
+        Assert.Throws<ArgumentNullException>(() => deck.AssignOwner(null!));
+    }
+
+    [Fact]
+    public void AssignOwner_WhenOwnedBySomeoneElse_ThrowsAndKeepsOwner()
+    {
+        var deck = new Deck("Matematika");
+        deck.AssignOwner("user-a");
+
+        Assert.Throws<InvalidOperationException>(() => deck.AssignOwner("user-b"));
+        Assert.Equal("user-a", deck.OwnerId);
+    }
+
+    [Fact]
+    public void AssignOwner_SameOwnerTwice_Throws()
+    {
+        var deck = new Deck("Matematika");
+        deck.AssignOwner("user-a");
+
+        Assert.Throws<InvalidOperationException>(() => deck.AssignOwner("user-a"));
+    }
+
+    [Fact]
+    public void PrivateDeck_OwnerCanViewAndEdit()
+    {
+        var deck = new Deck("Matematika", visibility: Visibility.Private);
+        deck.AssignOwner("user-a");
+
+        Assert.True(deck.CanBeViewed("user-a"));
+        Assert.True(deck.CanBeEdited("user-a"));
+    }
+
+    [Fact]
+    public void PrivateDeck_OtherUserCannotViewOrEdit()
+    {
+        var deck = new Deck("Matematika", visibility: Visibility.Private);
+        deck.AssignOwner("user-a");
+
+        Assert.False(deck.CanBeViewed("user-b"));
+        Assert.False(deck.CanBeEdited("user-b"));
+    }
+
+    [Fact]
+    public void PrivateDeck_NotLoggedInCannotViewOrEdit()
+    {
+        var deck = new Deck("Matematika", visibility: Visibility.Private);
+        deck.AssignOwner("user-a");
+
+        Assert.False(deck.CanBeViewed(null));
+        Assert.False(deck.CanBeEdited(null));
+    }
+
+    [Fact]
+    public void PublicDeck_OtherUserCanViewButNotEdit()
+    {
+        var deck = new Deck("Matematika", visibility: Visibility.Public);
+        deck.AssignOwner("user-a");
+
+        Assert.True(deck.CanBeViewed("user-b"));
+        Assert.False(deck.CanBeEdited("user-b"));
+    }
+
+    [Fact]
+    public void DeckWithoutOwner_AnyoneCanViewAndEdit()
+    {
+        var deck = new Deck("Matematika", visibility: Visibility.Private);
+
+        Assert.True(deck.CanBeViewed("user-b"));
+        Assert.True(deck.CanBeEdited("user-b"));
+        Assert.True(deck.CanBeViewed(null));
+    }
 }
