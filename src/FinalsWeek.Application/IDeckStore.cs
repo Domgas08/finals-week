@@ -4,9 +4,15 @@ using FinalsWeek.Core;
 
 public interface IDeckStore
 {
-    void Add(Deck deck);
+    Task AddAsync(Deck deck);
 
-    IReadOnlyList<Deck> GetAll();
+    Task<IReadOnlyList<Deck>> GetAllAsync();
 
-    Deck? GetById(Guid id);
+    Task<Deck?> GetByIdAsync(Guid id);
+
+    Task UpdateAsync(Deck deck);
+
+    Task AddQuestionsToDeckAsync(Guid deckId, IEnumerable<Question> questions);
+
+    Task AddQuestionToDeckAsync(Guid deckId, Question question);
 }

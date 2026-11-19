@@ -31,7 +31,7 @@ public class Deck : IEnumerable<Question>
         return GetEnumerator();
     }
 
-    public string Title { get; private set; }
+    public string Title { get; private set; } = string.Empty;
 
     public string? CourseCode { get; set; }
 
@@ -57,6 +57,10 @@ public class Deck : IEnumerable<Question>
     public bool RemoveQuestion(Guid questionId)
     {
         return questions.RemoveAll(q => q.Id == questionId) > 0;
+    }
+
+    private Deck()
+    {
     }
 
     private static string ValidateTitle(string title)

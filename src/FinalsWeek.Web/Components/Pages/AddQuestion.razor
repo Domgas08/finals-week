@@ -80,8 +80,9 @@ else
 
     <button type="button"
             class="btn btn-primary"
+            disabled="@saving"
             @onclick="SubmitQuestion">
-        Add question
+        @(saving ? "Saving..." : "Add question")
     </button>
 }
 
@@ -90,7 +91,7 @@ else
     public Guid DeckId { get; set; }
 
     private Deck? deck;
-
+    
     private string prompt = string.Empty;
 
     private List<string> options =
@@ -109,9 +110,11 @@ else
 
     private string? success;
 
-    protected override void OnParametersSet()
+    private bool saving;
+
+    protected override async Task OnParametersSetAsync()
     {
-        deck = DeckStore.GetById(DeckId);
+        deck = await DeckStore.GetByIdAsync(DeckId);
     }
 
     private void AddOption()
@@ -141,8 +144,13 @@ else
         }
     }
 
-    private void SubmitQuestion()
+    private async Task SubmitQuestion()
     {
+        if (saving)
+        {
+            return;
+        }
+
         error = null;
         success = null;
 
@@ -158,6 +166,8 @@ else
             return;
         }
 
+        saving = true;
+
         try
         {
             var questionTopic = string.IsNullOrWhiteSpace(topic)
@@ -171,7 +181,7 @@ else
                 questionTopic,
                 timeLimitSeconds);
 
-            deck.AddQuestion(question);
+            await DeckStore.AddQuestionToDeckAsync(DeckId, question);
 
             success = "Question added successfully.";
 
@@ -180,6 +190,10 @@ else
         catch (ArgumentException ex)
         {
             error = ex.Message;
+        }
+        finally
+        {
+            saving = false;
         }
     }
 

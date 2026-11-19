@@ -86,6 +86,53 @@ namespace FinalsWeek.Application.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("FinalsWeek.Core.Deck", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CourseCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Visibility")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Decks");
+                });
+
+            modelBuilder.Entity("FinalsWeek.Core.StudySession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CurrentIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("DeckId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("FinishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("StudySessions");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -216,6 +263,118 @@ namespace FinalsWeek.Application.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("FinalsWeek.Core.Deck", b =>
+                {
+                    b.OwnsMany("FinalsWeek.Core.Question", "Questions", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("CorrectIndex")
+                                .HasColumnType("integer");
+
+                            b1.Property<Guid>("DeckId")
+                                .HasColumnType("uuid");
+
+                            b1.PrimitiveCollection<string[]>("Options")
+                                .IsRequired()
+                                .HasColumnType("text[]")
+                                .HasColumnName("Options");
+
+                            b1.Property<string>("Prompt")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<int>("TimeLimitSeconds")
+                                .HasColumnType("integer");
+
+                            b1.Property<string>("Topic")
+                                .HasColumnType("text");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("DeckId");
+
+                            b1.ToTable("Questions", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("DeckId");
+                        });
+
+                    b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("FinalsWeek.Core.StudySession", b =>
+                {
+                    b.OwnsMany("FinalsWeek.Core.SessionAnswer", "answers", b1 =>
+                        {
+                            b1.Property<Guid>("SessionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("QuestionIndex")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("QuestionIndex"));
+
+                            b1.Property<int>("Outcome")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("PointsAwarded")
+                                .HasColumnType("integer");
+
+                            b1.Property<int?>("SelectedOptionIndex")
+                                .HasColumnType("integer");
+
+                            b1.HasKey("SessionId", "QuestionIndex");
+
+                            b1.ToTable("SessionAnswers", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("SessionId");
+                        });
+
+                    b.OwnsMany("FinalsWeek.Core.Question", "Questions", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("CorrectIndex")
+                                .HasColumnType("integer");
+
+                            b1.PrimitiveCollection<string[]>("Options")
+                                .IsRequired()
+                                .HasColumnType("text[]")
+                                .HasColumnName("Options");
+
+                            b1.Property<string>("Prompt")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<Guid>("SessionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("TimeLimitSeconds")
+                                .HasColumnType("integer");
+
+                            b1.Property<string>("Topic")
+                                .HasColumnType("text");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("SessionId");
+
+                            b1.ToTable("SessionQuestions", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("SessionId");
+                        });
+
+                    b.Navigation("Questions");
+
+                    b.Navigation("answers");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
