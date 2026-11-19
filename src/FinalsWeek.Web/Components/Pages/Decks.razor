@@ -1,8 +1,10 @@
 @page "/decks"
 @rendermode InteractiveServer
+@attribute [Authorize]
 @using FinalsWeek.Core
 @using FinalsWeek.Application
 @inject IDeckStore DeckStore
+@inject CurrentUser CurrentUser
 
 <PageTitle>Deck'ai</PageTitle>
 
@@ -63,11 +65,13 @@ else
     private string? error;
     private bool isLoading = true;
     private bool saving;
+    private string? userId;
 
     protected override async Task OnInitializedAsync()
     {
+        userId = await CurrentUser.GetIdAsync();
         isLoading = true;
-        decks = await DeckStore.GetAllAsync();
+        decks = userId is null ?[] : await DeckStore.GetAllOwnedAsync(userId);
         isLoading = false;
     }
 
@@ -88,11 +92,12 @@ else
                 : newCourseCode.Trim();
 
             var deck = new Deck(newTitle, courseCode: courseCode);
-            await DeckStore.AddAsync(deck);
+            ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+            await DeckStore.AddAsync(deck, userId);
 
             newTitle = string.Empty;
             newCourseCode = string.Empty;
-            decks = await DeckStore.GetAllAsync();
+            decks = await DeckStore.GetAllOwnedAsync(userId);
         }
         catch (ArgumentException ex)
         {

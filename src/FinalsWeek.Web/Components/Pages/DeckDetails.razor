@@ -1,7 +1,9 @@
 @page "/decks/{DeckId:guid}"
 @rendermode InteractiveServer
+@attribute [Authorize]
 @using FinalsWeek.Core
 @using FinalsWeek.Application
+@inject CurrentUser CurrentUser
 @inject IDeckStore DeckStore
 @inject ISessionStore SessionStore
 @inject NavigationManager Navigation
@@ -12,7 +14,7 @@
 {
     <p>Loading deck details...</p>
 }
-else if (deck is null)
+else if (deck is null || !deck.CanBeViewed(userId))
 {
     <p>Deck not found.</p>
     <a href="/decks">Back to decks</a>
@@ -20,7 +22,10 @@ else if (deck is null)
 else
 {
     <h1>@deck.Title</h1>
-    <a href="@($"/decks/{DeckId}/import")">Import questions from a file</a>
+    @if (deck.CanBeEdited(userId))
+    {
+        <a href="@($"/decks/{DeckId}/import")">Import questions from a file</a>
+    }
     
     @if (!string.IsNullOrWhiteSpace(deck.CourseCode))
     {
@@ -41,9 +46,11 @@ else
         {
             <span class="text-muted">Add questions before studying.</span>
         }
-
-        <a class="ms-2" href="@($"/decks/{DeckId}/questions/add")">Add question</a>
-        <a class="ms-2" href="@($"/decks/{DeckId}/import")">Import questions</a>
+        @if (deck.CanBeEdited(userId))
+        {
+            <a class="ms-2" href="@($"/decks/{DeckId}/questions/add")">Add question</a>
+            <a class="ms-2" href="@($"/decks/{DeckId}/import")">Import questions</a>
+        }
     </div>
 
     <h2>Questions</h2>
@@ -81,10 +88,13 @@ else
 
     private bool HasQuestions => deck?.Questions.Count > 0;
 
+    private string? userId;
+
     protected override async Task OnParametersSetAsync()
     {
+        userId = await CurrentUser.GetIdAsync();
         isLoading = true;
-        deck = await DeckStore.GetByIdAsync(DeckId);
+        deck = await DeckStore.GetByIdAsync(DeckId, userId);
         isLoading = false;
     }
 

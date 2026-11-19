@@ -3,6 +3,7 @@ using FinalsWeek.Application;
 using FinalsWeek.Web.Components;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using FinalsWeek.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,7 @@ builder.Services.AddSingleton<ISessionStore, InMemorySessionStore>();
 builder.Services.AddSingleton(sp => new UploadGuard(
     builder.Configuration.GetValue<long>("Upload:MaxSizeInBytes", 10 * 1024 * 1024)));
 builder.Services.AddScoped<IDeckStore, SqlDeckStore>();
+builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddTransient<IQuestionImporter, JsonImporter>();
 builder.Services.AddTransient<IQuestionImporter, CsvImporter>();
 

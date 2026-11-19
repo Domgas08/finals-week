@@ -21,6 +21,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
         {
             entity.HasKey(d => d.Id);
             entity.Property(d => d.Id).HasColumnType("uuid");
+            entity.HasOne<AppUser>().WithMany().HasForeignKey(d => d.OwnerId).OnDelete(DeleteBehavior.Cascade);
 
             entity.OwnsMany(d => d.Questions, q =>
             {
