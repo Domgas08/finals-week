@@ -1,3 +1,3 @@
 namespace FinalsWeek.Core;
 
-public record SessionAnswer(int? SelectedOptionIndex, AnswerOutcome Outcome, int PointsAwarded);
+public record SessionAnswer(int QuestionIndex, int? SelectedOptionIndex, AnswerOutcome Outcome, int PointsAwarded);

@@ -37,6 +37,7 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Test
+
         run: dotnet test --configuration Release --verbosity normal /p:CollectCoverage=true /p:ExcludeByFile="**/Migrations/*.cs" /p:Threshold=$COVERAGE_THRESHOLD /p:ThresholdType=line /p:ThresholdStat=total /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./coverage/
 
       - name: Coverage summary
@@ -45,3 +46,31 @@ jobs:
           dotnet tool install --global dotnet-reportgenerator-globaltool 
           reportgenerator -reports:"**/coverage.cobertura.xml" -targetdir:coverage-report -reporttypes:MarkdownSummaryGithub 
           cat coverage-report/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+
+
+  # After a merge to main, and only if build and tests passed: ask our server
+  # to deploy. The n8n webhook answers at once and runs the deploy over SSH.
+  # Setup: "Deploy from GitHub through n8n" in docs/deploy.md.
+  deploy:
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_WEBHOOK_URL: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+      DEPLOY_WEBHOOK_TOKEN: ${{ secrets.DEPLOY_WEBHOOK_TOKEN }}
+
+    steps:
+      - name: Ask the server to deploy
+        if: env.DEPLOY_WEBHOOK_URL != ''
+        run: >
+          curl --fail-with-body --silent --show-error --max-time 30
+          -X POST
+          -H "X-Deploy-Token: $DEPLOY_WEBHOOK_TOKEN"
+          -H "Content-Type: application/json"
+          -d '{"commit": "${{ github.sha }}"}'
+          "$DEPLOY_WEBHOOK_URL"
+
+      - name: Skip (deploy webhook not configured)
+        if: env.DEPLOY_WEBHOOK_URL == ''
+        run: echo "DEPLOY_WEBHOOK_URL secret is not set, so nothing was deployed."
+
