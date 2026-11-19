@@ -56,7 +56,10 @@ In the Cloudflare dashboard the `finals-week` tunnel should turn **Healthy**. Op
 
 The stack is called `finals-week`, so it also shows up in Portainer under that name.
 
-## Updating after a merge to main
+## Updating by hand after a merge to main
+
+With automatic updates (below) you do not need this.
+
 
 ```
 cd finals-week
@@ -65,6 +68,41 @@ docker compose -f deploy/docker-compose.prod.yml up -d --build
 ```
 
 Only `web` is rebuilt. The database and the login keys are kept, so nobody loses data or gets logged out.
+
+## Automatic updates
+
+The server checks GitHub every minute. When `main` has a new commit, it pulls it and runs the same `up -d --build` command as above. A merged PR is live a few minutes later.
+
+How it works:
+
+- `deploy/auto-update.sh` does the check and the update. If the build fails, the old version keeps running.
+- `deploy/finals-week-update.timer` runs it every minute, through `deploy/finals-week-update.service`.
+- The server only talks to GitHub. GitHub cannot run anything on the server, and no port is opened.
+
+Install it once. The hosting PR must be merged into `main` first, because the script deploys `main`.
+
+```
+cd ~/projects/finals-week
+sudo cp deploy/finals-week-update.service deploy/finals-week-update.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now finals-week-update.timer
+```
+
+The service file expects the repo in `/home/ubuntu/projects/finals-week` and runs as the user `ubuntu`. If that changes, edit `User=` and `ExecStart=` in `/etc/systemd/system/finals-week-update.service`.
+
+Check it:
+
+```
+systemctl list-timers finals-week-update.timer
+journalctl -u finals-week-update -f
+```
+
+The first command shows when it runs next. The second shows what each run did. A run with nothing new prints nothing.
+
+To deploy right now without waiting: `bash deploy/auto-update.sh`.
+To stop automatic updates: `sudo systemctl disable --now finals-week-update.timer`.
+
+With automatic updates on, do not edit tracked files on the server. Every update resets the checkout to match GitHub. `deploy/.env` is not tracked, so it is safe.
 
 ## Looking at logs
 
