@@ -1,0 +1,15 @@
+# Keep the Docker build context small, and keep local build output out of it.
+# bin/ and obj/ from Windows contain Windows paths and break the Linux build.
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.user
+.git/
+.github/
+.worktrees/
+tests/
+docs/
+deploy/
+**/*.env
