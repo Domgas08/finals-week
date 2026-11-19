@@ -67,21 +67,6 @@ namespace FinalsWeek.Application.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "StudySessions",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    DeckId = table.Column<Guid>(type: "uuid", nullable: false),
-                    CurrentIndex = table.Column<int>(type: "integer", nullable: false),
-                    StartedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    FinishedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_StudySessions", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -210,51 +195,6 @@ namespace FinalsWeek.Application.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "SessionAnswers",
-                columns: table => new
-                {
-                    QuestionIndex = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SessionId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SelectedOptionIndex = table.Column<int>(type: "integer", nullable: true),
-                    Outcome = table.Column<int>(type: "integer", nullable: false),
-                    PointsAwarded = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SessionAnswers", x => new { x.SessionId, x.QuestionIndex });
-                    table.ForeignKey(
-                        name: "FK_SessionAnswers_StudySessions_SessionId",
-                        column: x => x.SessionId,
-                        principalTable: "StudySessions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SessionQuestions",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Prompt = table.Column<string>(type: "text", nullable: false),
-                    Options = table.Column<string[]>(type: "text[]", nullable: false),
-                    CorrectIndex = table.Column<int>(type: "integer", nullable: false),
-                    Topic = table.Column<string>(type: "text", nullable: true),
-                    TimeLimitSeconds = table.Column<int>(type: "integer", nullable: false),
-                    SessionId = table.Column<Guid>(type: "uuid", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SessionQuestions", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_SessionQuestions_StudySessions_SessionId",
-                        column: x => x.SessionId,
-                        principalTable: "StudySessions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -296,11 +236,6 @@ namespace FinalsWeek.Application.Migrations
                 name: "IX_Questions_DeckId",
                 table: "Questions",
                 column: "DeckId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SessionQuestions_SessionId",
-                table: "SessionQuestions",
-                column: "SessionId");
         }
 
         /// <inheritdoc />
@@ -325,12 +260,6 @@ namespace FinalsWeek.Application.Migrations
                 name: "Questions");
 
             migrationBuilder.DropTable(
-                name: "SessionAnswers");
-
-            migrationBuilder.DropTable(
-                name: "SessionQuestions");
-
-            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
@@ -338,9 +267,6 @@ namespace FinalsWeek.Application.Migrations
 
             migrationBuilder.DropTable(
                 name: "Decks");
-
-            migrationBuilder.DropTable(
-                name: "StudySessions");
         }
     }
 }

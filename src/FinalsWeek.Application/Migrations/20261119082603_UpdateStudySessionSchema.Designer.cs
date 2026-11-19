@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FinalsWeek.Application.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261118103518_InitialOwnedSchema")]
-    partial class InitialOwnedSchema
+    [Migration("20261119082603_UpdateStudySessionSchema")]
+    partial class UpdateStudySessionSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
