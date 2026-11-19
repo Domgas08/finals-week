@@ -7,7 +7,7 @@ using Xunit;
 public class CsvImporterTests
 {
     [Fact]
-    public void Import_ValidRow_ReturnsQuestion()
+    public async Task Import_ValidRow_ReturnsQuestion()
     {
         const string csv =
             "Prompt,Option1,Option2,Option3,Option4,Option5,Option6,CorrectIndex,Topic,TimeLimitSeconds\n" +
@@ -17,7 +17,7 @@ public class CsvImporterTests
 
         var importer = new CsvImporter();
 
-        var result = importer.Import(stream);
+        var result = await importer.ImportAsync(stream);
 
         Assert.True(result.Success);
         Assert.Single(result.Questions);
@@ -28,7 +28,7 @@ public class CsvImporterTests
     }
 
     [Fact]
-    public void Import_BadRow_ReportsFailure()
+    public async Task Import_BadRow_ReportsFailure()
     {
         const string csv =
             "Prompt,Option1,Option2,Option3,Option4,Option5,Option6,CorrectIndex,Topic,TimeLimitSeconds\n" +
@@ -38,7 +38,7 @@ public class CsvImporterTests
 
         var importer = new CsvImporter();
 
-        var result = importer.Import(stream);
+        var result = await importer.ImportAsync(stream);
 
         Assert.True(result.Success);
         Assert.Empty(result.Questions);
@@ -47,7 +47,7 @@ public class CsvImporterTests
     }
 
     [Fact]
-    public void Import_MixedRows_ContinuesAfterBadRow()
+    public async Task Import_MixedRows_ContinuesAfterBadRow()
     {
         const string csv =
             "Prompt,Option1,Option2,Option3,Option4,Option5,Option6,CorrectIndex,Topic,TimeLimitSeconds\n" +
@@ -59,7 +59,7 @@ public class CsvImporterTests
 
         var importer = new CsvImporter();
 
-        var result = importer.Import(stream);
+        var result = await importer.ImportAsync(stream);
 
         Assert.True(result.Success);
         Assert.Equal(2, result.Questions.Count);
@@ -68,20 +68,20 @@ public class CsvImporterTests
     }
 
     [Fact]
-    public void Import_EmptyFile_ReturnsFailure()
+    public async Task Import_EmptyFile_ReturnsFailure()
     {
         using var stream = CreateStream(string.Empty);
 
         var importer = new CsvImporter();
 
-        var result = importer.Import(stream);
+        var result = await importer.ImportAsync(stream);
 
         Assert.False(result.Success);
         Assert.Equal("The CSV file is empty.", result.FailureReason);
     }
 
     [Fact]
-    public void Import_InvalidHeader_ReturnsFailure()
+    public async Task Import_InvalidHeader_ReturnsFailure()
     {
         const string csv =
             "Wrong,Header\n" +
@@ -91,7 +91,7 @@ public class CsvImporterTests
 
         var importer = new CsvImporter();
 
-        var result = importer.Import(stream);
+        var result = await importer.ImportAsync(stream);
 
         Assert.False(result.Success);
         Assert.Equal("The CSV header is invalid.", result.FailureReason);

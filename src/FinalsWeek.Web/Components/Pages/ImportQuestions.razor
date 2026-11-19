@@ -154,7 +154,7 @@ else
         await file.OpenReadStream(file.Size).CopyToAsync(memory);
         memory.Position = 0;
 
-        result = importer.Import(memory);
+        result = await importer.ImportAsync(memory);
     }
 
     private async Task Confirm()

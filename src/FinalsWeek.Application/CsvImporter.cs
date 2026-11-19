@@ -1,5 +1,6 @@
 namespace FinalsWeek.Application;
 
+using System.Net.NetworkInformation;
 using FinalsWeek.Core;
 
 public class CsvImporter : IQuestionImporter
@@ -9,37 +10,12 @@ public class CsvImporter : IQuestionImporter
 
     public string Extension => ".csv";
 
-    public ImportResult Import(Stream stream)
+    private static async IAsyncEnumerable<NumberedRow<string>> ReadRowsAsync(StreamReader reader)
     {
-        ArgumentNullException.ThrowIfNull(stream);
-
-        var questions = new List<Question>();
-        var failedRows = new List<ImportRowFailure>();
-
-        using var reader = new StreamReader(stream, leaveOpen: true);
-
-        var header = reader.ReadLine();
-
-        if (header is null)
-        {
-            return new ImportResult(
-                questions,
-                failedRows,
-                "The CSV file is empty.");
-        }
-
-        if (!string.Equals(header.Trim(), ExpectedHeader, StringComparison.OrdinalIgnoreCase))
-        {
-            return new ImportResult(
-                questions,
-                failedRows,
-                "The CSV header is invalid.");
-        }
-
-        var lineNumber = 1;
         string? line;
+        int lineNumber = 1;
 
-        while ((line = reader.ReadLine()) is not null)
+        while ((line = await reader.ReadLineAsync()) is not null)
         {
             lineNumber++;
 
@@ -48,65 +24,85 @@ public class CsvImporter : IQuestionImporter
                 continue;
             }
 
-            try
-            {
-                var columns = ParseCsvLine(line);
+            yield return new NumberedRow<string>(lineNumber, line);
+        }
+    }
 
-                if (columns.Count != 10)
-                {
-                    throw new ArgumentException(
-                        $"Expected 10 columns but found {columns.Count}.");
-                }
+    private static Question ToQuestion(string line)
+    {
+        var columns = ParseCsvLine(line);
 
-                var prompt = columns[0];
-
-                var options = columns
-                    .Skip(1)
-                    .Take(6)
-                    .Where(option => !string.IsNullOrWhiteSpace(option))
-                    .ToList();
-
-                if (options.Count < 2)
-                {
-                    throw new ArgumentException("A question must have at least 2 options.");
-                }
-
-                if (!int.TryParse(columns[7], out var correctIndex))
-                {
-                    throw new ArgumentException("CorrectIndex must be a number.");
-                }
-
-                var topic = string.IsNullOrWhiteSpace(columns[8])
-                    ? null
-                    : columns[8].Trim();
-
-                var timeLimitSeconds = 20;
-
-                if (!string.IsNullOrWhiteSpace(columns[9])
-                    && !int.TryParse(columns[9], out timeLimitSeconds))
-                {
-                    throw new ArgumentException("TimeLimitSeconds must be a number.");
-                }
-
-                var question = new Question(
-                    prompt,
-                    options,
-                    correctIndex,
-                    topic,
-                    timeLimitSeconds);
-
-                questions.Add(question);
-            }
-            catch (Exception ex) when (
-                ex is ArgumentException
-                || ex is FormatException)
-            {
-                failedRows.Add(
-                    new ImportRowFailure(lineNumber, ex.Message));
-            }
+        if (columns.Count != 10)
+        {
+            throw new ArgumentException(
+                $"Expected 10 columns but found {columns.Count}.");
         }
 
-        return new ImportResult(questions, failedRows);
+        var prompt = columns[0];
+
+        var options = columns
+            .Skip(1)
+            .Take(6)
+            .Where(option => !string.IsNullOrWhiteSpace(option))
+            .ToList();
+
+        if (options.Count < 2)
+        {
+            throw new ArgumentException("A question must have at least 2 options.");
+        }
+
+        if (!int.TryParse(columns[7], out var correctIndex))
+        {
+            throw new ArgumentException("CorrectIndex must be a number.");
+        }
+
+        var topic = string.IsNullOrWhiteSpace(columns[8])
+            ? null
+            : columns[8].Trim();
+
+        var timeLimitSeconds = 20;
+
+        if (!string.IsNullOrWhiteSpace(columns[9])
+            && !int.TryParse(columns[9], out timeLimitSeconds))
+        {
+            throw new ArgumentException("TimeLimitSeconds must be a number.");
+        }
+
+        var question = new Question(
+            prompt,
+            options,
+            correctIndex,
+            topic,
+            timeLimitSeconds);
+
+        return question;
+    }
+
+    public async Task<ImportResult> ImportAsync(Stream stream)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+
+        using var reader = new StreamReader(stream, leaveOpen: true);
+
+        var header = await reader.ReadLineAsync();
+
+        if (header is null)
+        {
+            return new ImportResult(
+                [],
+                [],
+                "The CSV file is empty.");
+        }
+
+        if (!string.Equals(header.Trim(), ExpectedHeader, StringComparison.OrdinalIgnoreCase))
+        {
+            return new ImportResult(
+                [],
+                [],
+                "The CSV header is invalid.");
+        }
+
+        return await ImportPipeline.RunAsync(ReadRowsAsync(reader), ToQuestion);
     }
 
     private static List<string> ParseCsvLine(string line)
