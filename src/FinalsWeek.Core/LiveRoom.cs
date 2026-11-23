@@ -1,5 +1,7 @@
 namespace FinalsWeek.Core;
 
+using FinalsWeek.Core.Exceptions;
+
 public class LiveRoom
 {
     private readonly string hostToken;
