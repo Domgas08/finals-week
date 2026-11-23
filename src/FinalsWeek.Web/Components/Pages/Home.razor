@@ -1,7 +1,26 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Finals Week</PageTitle>
 
-<h1>Sveikas, pasauli!</h1>
+<div class="p-4 p-md-5 mb-4 bg-body-tertiary border rounded-3">
+    <h1 class="display-6 fw-bold">Study for finals week</h1>
+    <p class="lead">
+        Build question decks for your courses, study them as quizzes,
+        and see which topics still need work.
+    </p>
 
-<a href="decks">Į mano deck'us</a>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-primary btn-lg" href="/demo">Try a demo deck</a>
+
+        <AuthorizeView>
+            <Authorized>
+                <a class="btn btn-outline-secondary btn-lg" href="/decks">My decks</a>
+            </Authorized>
+            <NotAuthorized>
+                <a class="btn btn-outline-secondary btn-lg" href="/register">Create an account</a>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+
+    <p class="text-muted small mt-3 mb-0">The demo works without an account.</p>
+</div>

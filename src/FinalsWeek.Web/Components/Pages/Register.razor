@@ -1,6 +1,8 @@
 @page "/register"
 @using Microsoft.AspNetCore.Identity
 @using FinalsWeek.Application
+@inject SignInManager<AppUser> SignInManager
+@inject NavigationManager Navigation
 @inject UserManager<AppUser> UserManager
 
 <h1>Register</h1>
@@ -42,7 +44,9 @@
         var result = await UserManager.CreateAsync(user, model.Password);
         if (result.Succeeded)
         {
-            success = true;
+            await SignInManager.SignInAsync(user, isPersistent: false);
+            Navigation.NavigateTo("/decks");
+            return;
         }
         else
         {
