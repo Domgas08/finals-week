@@ -1,6 +1,6 @@
 namespace FinalsWeek.Application;
 
-using System.Net.NetworkInformation;
+
 using FinalsWeek.Core;
 
 public class CsvImporter : IQuestionImporter
