@@ -78,7 +78,7 @@ else
         error = null;
         DeckTitle = null;
 
-        var session = SessionStore.Find(SessionId);
+        var session = await SessionStore.FindAsync(SessionId);
 
         if (session is null)
         {

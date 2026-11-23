@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using FinalsWeek.Application;
 using FinalsWeek.Web.Components;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FinalsWeek.Web;
 
@@ -11,11 +12,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddSingleton<ISessionStore, InMemorySessionStore>();
 builder.Services.AddSingleton(sp => new UploadGuard(
     builder.Configuration.GetValue<long>("Upload:MaxSizeInBytes", 10 * 1024 * 1024)));
 builder.Services.AddScoped<IDeckStore, SqlDeckStore>();
+
 builder.Services.AddScoped<CurrentUser>();
+builder.Services.AddScoped<ISessionStore, SqlSessionStore>();
 builder.Services.AddTransient<IQuestionImporter, JsonImporter>();
 builder.Services.AddTransient<IQuestionImporter, CsvImporter>();
 
@@ -51,6 +53,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<DemoDeckSeeder>();
 
 var app = builder.Build();
 
@@ -77,6 +80,9 @@ using (var scope = app.Services.CreateScope())
             await Task.Delay(TimeSpan.FromSeconds(5));
         }
     }
+
+    var seeder = scope.ServiceProvider.GetRequiredService<DemoDeckSeeder>();
+    await seeder.SeedAsync();
 }
 
 // Configure the HTTP request pipeline.

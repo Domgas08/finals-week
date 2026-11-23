@@ -12,13 +12,18 @@ public class Deck : IEnumerable<Question>
 {
     private readonly List<Question> questions = new();
 
-    public Deck(string title, string? courseCode = null, string? description = null, Visibility visibility = Visibility.Private)
+    public Deck(string title, string? courseCode = null, string? description = null, Visibility visibility = Visibility.Private, Guid? id = null)
     {
+        if (id == Guid.Empty)
+        {
+            throw new ArgumentException("Id cannot be empty", nameof(id));
+        }
+
         this.Title = ValidateTitle(title);
         this.CourseCode = courseCode;
         this.Description = description;
         this.Visibility = visibility;
-        this.Id = Guid.NewGuid();
+        this.Id = id ?? Guid.NewGuid();
     }
 
     public IEnumerator<Question> GetEnumerator()

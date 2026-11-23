@@ -95,9 +95,9 @@ else
     private int CorrectCount =>
         session!.Answers.Values.Count(o => o.Outcome == AnswerOutcome.Correct);
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
-        session = SessionStore.Find(SessionId);
+        session = await SessionStore.FindAsync(SessionId);
         ShowCurrentQuestion();
     }
 
@@ -109,7 +109,7 @@ else
         selectedIndex = null;
     }
 
-    private void Submit()
+    private async Task Submit()
     {
         if (session is null || selectedIndex is null)
         {
@@ -131,7 +131,7 @@ else
             lastResult.IsCorrect ? AnswerOutcome.Correct : AnswerOutcome.Incorrect,
             lastResult.PointsAwarded);
 
-        SessionStore.Save(session);
+        await SessionStore.SaveAsync(session);
     }
 
     private void Next()

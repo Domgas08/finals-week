@@ -58,7 +58,7 @@ else
     {
         userId = await CurrentUser.GetIdAsync();
         isLoading = true;
-        var finishedSessions = SessionStore.GetFinished();
+        var finishedSessions = await SessionStore.GetFinishedAsync();
 
         var tempEntries = new List<SessionHistoryEntry>();
 
