@@ -26,7 +26,6 @@ public class PostgresFixture : IAsyncLifetime
 {
 
     var options = new DbContextOptionsBuilder<AppDbContext>()
-        .UseNpgsql(_container.GetConnectionString())
         .UseNpgsql(_container.GetConnectionString() + ";Include Error Detail=true")
         .Options;
 
