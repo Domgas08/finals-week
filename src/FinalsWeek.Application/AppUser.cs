@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Identity;
-
 namespace FinalsWeek.Application;
 
-public class AppUser : IdentityUser {
+using Microsoft.AspNetCore.Identity;
+
+public class AppUser : IdentityUser
+{
 }

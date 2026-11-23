@@ -50,6 +50,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<DemoDeckSeeder>();
 
 var app = builder.Build();
 
@@ -76,6 +77,9 @@ using (var scope = app.Services.CreateScope())
             await Task.Delay(TimeSpan.FromSeconds(5));
         }
     }
+
+    var seeder = scope.ServiceProvider.GetRequiredService<DemoDeckSeeder>();
+    await seeder.SeedAsync();
 }
 
 // Configure the HTTP request pipeline.

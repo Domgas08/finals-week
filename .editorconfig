@@ -8,3 +8,9 @@ dotnet_diagnostic.SA1601.severity = none
 dotnet_diagnostic.SA1633.severity = none
 dotnet_diagnostic.SA1101.severity = none
 dotnet_diagnostic.SA0001.severity = none
+dotnet_diagnostic.SA1602.severity = none
+dotnet_diagnostic.SA1210.severity = none
+dotnet_diagnostic.SA1208.severity = none
+
+[src/FinalsWeek.Application/Migrations/*.cs]
+generated_code = true

@@ -1,0 +1,69 @@
+@page "/demo"
+@rendermode InteractiveServer
+@using FinalsWeek.Core
+@using FinalsWeek.Application
+@inject IDeckStore DeckStore
+@inject ISessionStore SessionStore
+@inject NavigationManager Navigation
+
+<PageTitle>Try the demo</PageTitle>
+
+@if (isLoading)
+{
+    <p>Loading the demo deck...</p>
+}
+else if (deck is null)
+{
+    <h1>Demo not available</h1>
+    <p>The demo deck could not be loaded. Please try again later.</p>
+    <a href="/">Back to home</a>
+}
+else
+{
+    <div class="card" style="max-width: 40rem;">
+        <div class="card-body">
+            <span class="badge text-bg-secondary mb-2">Demo deck</span>
+            <h1 class="h3">@deck.Title</h1>
+            <p>@deck.Description</p>
+            <p class="text-muted">
+                @deck.Questions.Count questions - @string.Join(", ", Topics)
+            </p>
+
+            <button class="btn btn-primary btn-lg" @onclick="StartAsync" disabled="@starting">
+                @(starting ? "Starting..." : "Start studying")
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    private Deck? deck;
+    private bool isLoading = true;
+    private bool starting;
+
+    private IEnumerable<string> Topics => deck!.Questions
+        .Select(q => q.Topic)
+        .OfType<string>()
+        .Distinct();
+
+    protected override async Task OnInitializedAsync()
+    {
+        deck = await DeckStore.GetByIdAsync(DemoDeck.Id);
+        isLoading = false;
+    }
+
+    private async Task StartAsync()
+    {
+        if (deck is null || starting)
+        {
+            return;
+        }
+
+        starting = true;
+
+        // Always a new session. Sessions have no owner yet, so FindActiveAsync
+        // could give this visitor another visitor's unfinished session.
+        var session = await SessionStore.CreateAsync(deck);
+        Navigation.NavigateTo($"/study/{session.Id}");
+    }
+}
