@@ -38,3 +38,21 @@ Domas Grimalauskas
 
 1. Install Docker Desktop.
 2. From the repo root, run: docker compose up -d
+
+## Test coverage
+
+Coverage is measured with [coverlet](https://github.com/coverlet-coverage/coverlet). EF migrations are excluded from the measurement.
+
+### Run locally
+
+From the repository root:
+
+```bash
+dotnet test --configuration Release /p:CollectCoverage=true /p:ExcludeByFile="**/Migrations/*.cs" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./coverage/
+```
+
+A coverage table is printed in the terminal. The full report is saved as `coverage/coverage.cobertura.xml` inside the test project folder.
+
+### In CI
+
+Every pull request run shows line and branch coverage in the job summary (open the run on the **Actions** tab and click **Summary**). The minimum line coverage is set in one place: `COVERAGE_THRESHOLD` at the top of `.github/workflows/ci.yml`.
