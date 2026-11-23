@@ -1,6 +1,6 @@
 namespace FinalsWeek.Core;
 
-public record TopicSummary (string Topic, IReadOnlyList<QuestionResult> Results)
+public record TopicSummary(string Topic, IReadOnlyList<QuestionResult> Results)
 {
     public int TotalCount => Results.Count;
 

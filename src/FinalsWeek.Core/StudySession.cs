@@ -42,8 +42,7 @@ public class StudySession
 
     public DateTimeOffset? FinishedAt { get; private set; }
 
-
-    public IReadOnlyDictionary<int, SessionAnswer> Answers => 
+    public IReadOnlyDictionary<int, SessionAnswer> Answers =>
         answers.ToDictionary(a => a.QuestionIndex, a => a);
 
     public SessionProgress Progress => new(answers.Count, Questions.Count);
