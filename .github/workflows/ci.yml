@@ -6,6 +6,9 @@ on:
   push:
     branches: [ main ]
 
+env:
+  COVERAGE_THRESHOLD: 50
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -34,7 +37,16 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test --no-build --configuration Release --verbosity normal
+
+        run: dotnet test --no-build --configuration Release --verbosity normal /p:CollectCoverage=true /p:ExcludeByFile="**/Migrations/*.cs" /p:Threshold=$COVERAGE_THRESHOLD /p:ThresholdType=line /p:ThresholdStat=total /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./coverage/
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          dotnet tool install --global dotnet-reportgenerator-globaltool 
+          reportgenerator -reports:"**/coverage.cobertura.xml" -targetdir:coverage-report -reporttypes:MarkdownSummaryGithub 
+          cat coverage-report/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+
 
   # After a merge to main, and only if build and tests passed: ask our server
   # to deploy. The n8n webhook answers at once and runs the deploy over SSH.
