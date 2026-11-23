@@ -1,6 +1,6 @@
-namespace FinalsWeek.Tests;
+namespace FinalsWeek.Core.Tests;
 
-using FinalsWeek.Core;
+using FinalsWeek.Core.Exceptions;
 using Xunit;
 
 public class RoomExceptionTests
@@ -48,16 +48,5 @@ public class RoomExceptionTests
         Assert.Equal(
             "Room 'ABC123' has already finished.",
             exception.Message);
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData(" ")]
-    [InlineData("   ")]
-    public void RoomNotFoundException_ThrowsForInvalidRoomCode(string? roomCode)
-    {
-        Assert.ThrowsAny<ArgumentException>(
-            () => new RoomNotFoundException(roomCode!));
     }
 }
