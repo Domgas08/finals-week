@@ -18,14 +18,14 @@ public class SqlDeckStore(AppDbContext context) : IDeckStore
     public async Task<IReadOnlyList<Deck>> GetAllAsync()
     {
         return await this.context.Decks
-            .Include(d => d.Questions)
+            .Include(d => d.Questions.OrderBy(q => EF.Property<int>(q, "Position")))
             .ToListAsync();
     }
 
     public async Task<Deck?> GetByIdAsync(Guid id)
     {
         return await this.context.Decks
-            .Include(d => d.Questions)
+            .Include(d => d.Questions.OrderBy(q => EF.Property<int>(q, "Position")))
             .FirstOrDefaultAsync(d => d.Id == id);
     }
 

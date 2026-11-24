@@ -283,6 +283,9 @@ namespace FinalsWeek.Application.Migrations
                                 .HasColumnType("text[]")
                                 .HasColumnName("Options");
 
+                            b1.Property<int>("Position")
+                                .HasColumnType("integer");
+
                             b1.Property<string>("Prompt")
                                 .IsRequired()
                                 .HasColumnType("text");
@@ -314,10 +317,7 @@ namespace FinalsWeek.Application.Migrations
                                 .HasColumnType("uuid");
 
                             b1.Property<int>("QuestionIndex")
-                                .ValueGeneratedOnAdd()
                                 .HasColumnType("integer");
-
-                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("QuestionIndex"));
 
                             b1.Property<int>("Outcome")
                                 .HasColumnType("integer");
@@ -348,6 +348,9 @@ namespace FinalsWeek.Application.Migrations
                                 .IsRequired()
                                 .HasColumnType("text[]")
                                 .HasColumnName("Options");
+
+                            b1.Property<int>("Position")
+                                .HasColumnType("integer");
 
                             b1.Property<string>("Prompt")
                                 .IsRequired()
