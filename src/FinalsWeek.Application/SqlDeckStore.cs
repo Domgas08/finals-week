@@ -20,7 +20,7 @@ public class SqlDeckStore(AppDbContext context) : IDeckStore
     public async Task<IReadOnlyList<Deck>> GetAllOwnedAsync(string userId)
     {
         return await this.context.Decks
-            .Include(d => d.Questions)
+            .Include(d => d.Questions.OrderBy(q => EF.Property<int>(q, "Position")))
             .Where(d => d.OwnerId == userId)
             .ToListAsync();
     }
@@ -28,7 +28,7 @@ public class SqlDeckStore(AppDbContext context) : IDeckStore
     public async Task<Deck?> GetByIdAsync(Guid id, string? userId)
     {
         var deck = await this.context.Decks
-            .Include(d => d.Questions)
+            .Include(d => d.Questions.OrderBy(q => EF.Property<int>(q, "Position")))
             .FirstOrDefaultAsync(d => d.Id == id);
 
         return deck is not null && deck.CanBeViewed(userId) ? deck : null;
