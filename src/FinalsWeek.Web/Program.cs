@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using FinalsWeek.Application;
 using FinalsWeek.Web.Components;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FinalsWeek.Web;
 
@@ -19,6 +18,8 @@ builder.Services.AddScoped<IDeckStore, SqlDeckStore>();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<ISessionStore, SqlSessionStore>();
 builder.Services.AddTransient<IQuestionImporter, JsonImporter>();
+builder.Services.AddSingleton<RoomRegistry>();
+
 builder.Services.AddTransient<IQuestionImporter, CsvImporter>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
