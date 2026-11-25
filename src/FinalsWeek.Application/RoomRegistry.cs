@@ -2,6 +2,7 @@ namespace FinalsWeek.Application;
 
 using System.Collections.Concurrent;
 using FinalsWeek.Core;
+using FinalsWeek.Core.Exceptions;
 
 public class RoomRegistry
 {

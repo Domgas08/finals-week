@@ -1,8 +1,9 @@
 namespace FinalsWeek.Core.Tests;
 
 using System.Collections.Concurrent;
-using FinalsWeek.Application;
 using FinalsWeek.Core;
+using FinalsWeek.Core.Exceptions;
+using FinalsWeek.Application;
 using Xunit;
 
 public class RoomRegistryTests
