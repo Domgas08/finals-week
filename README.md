@@ -33,6 +33,7 @@ Finals Week does three things:
 Austėja Likaitė
 Ugnius Kavaliauskas
 Domas Grimalauskas
+Feliksas Oskaras Klimas
 
 ## Running the database
 

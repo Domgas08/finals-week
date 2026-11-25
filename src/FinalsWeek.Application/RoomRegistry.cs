@@ -30,7 +30,10 @@ public class RoomRegistry
         {
             var code = NewCode();
             var room = new LiveRoom(code, deck.Id, hostToken, settings, questions.ToList());
-            if (rooms.TryAdd(code, new RoomEntry(room))) { return new CreatedRoom(code, hostToken); }
+            if (rooms.TryAdd(code, new RoomEntry(room)))
+            {
+                return new CreatedRoom(code, hostToken);
+            }
         }
     }
 

@@ -26,7 +26,6 @@ public record Question
     {
     }
 
-    // per StyleCop warning CS8618
     public string Prompt { get; private init; } = string.Empty;
 
     public IReadOnlyList<string> Options { get; private init; } = [];

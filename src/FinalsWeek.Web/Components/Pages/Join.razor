@@ -1,0 +1,166 @@
+@page "/join"
+@rendermode InteractiveServer
+@implements IDisposable
+@using FinalsWeek.Application
+@using FinalsWeek.Core
+@using FinalsWeek.Core.Exceptions
+@inject RoomRegistry RoomRegistry
+
+<PageTitle>Join Room</PageTitle>
+
+<h1>Join a Room</h1>
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        @errorMessage
+    </div>
+}
+
+@if (snapshot is null)
+{
+    <div class="mb-3">
+        <label for="roomCode" class="form-label">Room code</label>
+        <input id="roomCode"
+               type="text"
+               class="form-control"
+               @bind="roomCode"
+               placeholder="e.g. ABC234" />
+    </div>
+
+    <div class="mb-3">
+        <label for="playerName" class="form-label">Your name</label>
+        <input id="playerName"
+               type="text"
+               class="form-control"
+               @bind="playerName"
+               placeholder="Enter your name" />
+    </div>
+
+    <button type="button" class="btn btn-primary" @onclick="JoinRoom">
+        Join room
+    </button>
+}
+else
+{
+    <div class="alert alert-info">
+        Room <strong>@snapshot.Code</strong> — joined as <strong>@joinedPlayer?.DisplayName</strong>
+    </div>
+
+    @if (snapshot.State == RoomState.Lobby)
+    {
+        <p class="lead">Waiting for host...</p>
+    }
+    else if (snapshot.State == RoomState.InProgress && snapshot.CurrentQuestion is not null)
+    {
+        <p class="text-muted">
+            Question @(snapshot.CurrentQuestionIndex + 1) of @snapshot.QuestionCount
+        </p>
+        <h2>@snapshot.CurrentQuestion.Prompt</h2>
+    }
+    else if (snapshot.State == RoomState.Finished)
+    {
+        <h2>Session finished.</h2>
+    }
+}
+
+@code {
+    private string roomCode = string.Empty;
+    private string playerName = string.Empty;
+    private string? errorMessage;
+    private RoomPlayer? joinedPlayer;
+    private RoomSnapshot? snapshot;
+    private string? subscribedCode;
+    private bool isSubscribed;
+
+    private void JoinRoom()
+    {
+        errorMessage = null;
+
+        var code = roomCode.Trim();
+        var name = playerName.Trim();
+
+        if (string.IsNullOrEmpty(code))
+        {
+            errorMessage = "Please enter a room code.";
+            return;
+        }
+
+        if (string.IsNullOrEmpty(name))
+        {
+            errorMessage = "Please enter your name.";
+            return;
+        }
+
+        try
+        {
+            var player = RoomRegistry.Join(code, name);
+            var currentSnapshot = RoomRegistry.GetSnapshot(code);
+
+            joinedPlayer = player;
+            subscribedCode = currentSnapshot.Code;
+            EnsureSubscribed();
+            snapshot = currentSnapshot;
+        }
+        catch (RoomNotFoundException)
+        {
+            errorMessage = "No such room.";
+        }
+        catch (RoomFullException)
+        {
+            errorMessage = "Room is full.";
+        }
+        catch (RoomAlreadyStartedException)
+        {
+            errorMessage = "Room already started.";
+        }
+        catch (RoomAlreadyFinishedException)
+        {
+            errorMessage = "Room already finished.";
+        }
+    }
+
+    private void EnsureSubscribed()
+    {
+        if (!isSubscribed)
+        {
+            RoomRegistry.RoomChanged += OnRoomChanged;
+            isSubscribed = true;
+        }
+    }
+
+    public void Dispose() => Unsubscribe();
+
+    private void Unsubscribe()
+    {
+        if (isSubscribed)
+        {
+            RoomRegistry.RoomChanged -= OnRoomChanged;
+            isSubscribed = false;
+        }
+    }
+
+    private void OnRoomChanged(string changedCode)
+    {
+        if (!string.Equals(changedCode, subscribedCode, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        _ = InvokeAsync(RefreshSnapshot);
+    }
+
+    private void RefreshSnapshot()
+    {
+        if (subscribedCode is null) return;
+
+        try
+        {
+            snapshot = RoomRegistry.GetSnapshot(subscribedCode);
+        }
+        catch (RoomNotFoundException)
+        {
+            errorMessage = "The room was closed.";
+        }
+
+        StateHasChanged();
+    }
+}
