@@ -48,7 +48,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        deck = await DeckStore.GetByIdAsync(DemoDeck.Id);
+        deck = await DeckStore.GetByIdAsync(DemoDeck.Id, userId: null);
         isLoading = false;
     }
 

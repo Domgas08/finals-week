@@ -22,7 +22,8 @@ public class SqlSessionStoreTests(PostgresFixture fixture) : IClassFixture<Postg
 
         await using (var writeContext = fixture.CreateContext())
         {
-            await new SqlDeckStore(writeContext).AddAsync(deck);
+            var userId = await CreateUserAsync(writeContext);
+            await new SqlDeckStore(writeContext).AddAsync(deck, userId);
 
             var sessionStore = new SqlSessionStore(writeContext);
             var session = await sessionStore.CreateAsync(deck);
@@ -66,7 +67,8 @@ public class SqlSessionStoreTests(PostgresFixture fixture) : IClassFixture<Postg
 
         await using (var writeContext = fixture.CreateContext())
         {
-            await new SqlDeckStore(writeContext).AddAsync(deck);
+            var userId = await CreateUserAsync(writeContext);
+            await new SqlDeckStore(writeContext).AddAsync(deck, userId);
             var sessionStore = new SqlSessionStore(writeContext);
             var session = await sessionStore.CreateAsync(deck);
             sessionId = session.Id;
@@ -88,5 +90,14 @@ public class SqlSessionStoreTests(PostgresFixture fixture) : IClassFixture<Postg
 
         var finished = await store.GetFinishedAsync();
         Assert.DoesNotContain(finished, s => s.Id == sessionId);
+    }
+
+    private static async Task<string> CreateUserAsync(AppDbContext context)
+    {
+        var email = $"{Guid.NewGuid()}@test.com";
+        var user = new AppUser { UserName = email, Email = email };
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+        return user.Id;
     }
 }
