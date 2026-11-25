@@ -69,7 +69,7 @@ public class Deck : IEnumerable<Question>
 
     public bool CanBeEdited(string? userId)
     {
-        return userId == this.OwnerId || this.OwnerId is null;
+        return userId is not null && (userId == this.OwnerId);
     }
 
     public void Rename(string newTitle)

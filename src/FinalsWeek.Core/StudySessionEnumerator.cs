@@ -27,7 +27,7 @@ public class StudySessionEnumerator : IEnumerator<Question>
     {
         cursor.Dispose();
     }
-	
+
     public bool MoveNext()
     {
         return cursor.MoveNext();

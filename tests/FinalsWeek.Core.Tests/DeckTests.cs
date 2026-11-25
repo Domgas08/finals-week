@@ -204,12 +204,13 @@ public class DeckTests
     }
 
     [Fact]
-    public void DeckWithoutOwner_AnyoneCanViewAndEdit()
+    public void DeckWithoutOwner_AnyoneCanViewButNobodyCanEdit()
     {
         var deck = new Deck("Matematika", visibility: Visibility.Private);
 
         Assert.True(deck.CanBeViewed("user-b"));
-        Assert.True(deck.CanBeEdited("user-b"));
         Assert.True(deck.CanBeViewed(null));
+        Assert.False(deck.CanBeEdited("user-b"));
+        Assert.False(deck.CanBeEdited(null));
     }
 }
