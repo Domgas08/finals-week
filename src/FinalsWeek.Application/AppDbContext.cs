@@ -27,6 +27,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
 
             entity.OwnsMany(d => d.Questions, q =>
             {
+                q.Property<int>("Position");
                 q.ToTable("Questions");
                 q.WithOwner().HasForeignKey("DeckId");
 
@@ -61,6 +62,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
 
             entity.OwnsMany(s => s.Questions, q =>
             {
+                q.Property<int>("Position");
                 q.ToTable("SessionQuestions");
                 q.WithOwner().HasForeignKey("SessionId");
 
@@ -85,6 +87,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
             entity.OwnsMany<SessionAnswer>("answers", a =>
             {
                 a.ToTable("SessionAnswers");
+                a.Property(ans => ans.QuestionIndex).IsRequired().ValueGeneratedNever();
                 a.WithOwner().HasForeignKey("SessionId");
 
                 a.Property("SessionId").HasColumnType("uuid");
@@ -97,4 +100,46 @@ public class AppDbContext : IdentityDbContext<AppUser>
             });
         });
     }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        this.SetQuestionPositions();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override async Task<int> SaveChangesAsync(
+        bool acceptAllChangesOnSuccess,
+        CancellationToken cancellationToken = default)
+    {
+        this.SetQuestionPositions();
+        return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    private void SetQuestionPositions()
+    {
+        this.ChangeTracker.DetectChanges();
+
+        foreach (var entry in this.ChangeTracker.Entries<Deck>()
+            .Where(e => e.State != EntityState.Deleted)
+            .ToList())
+        {
+            var position = 0;
+            foreach (var question in entry.Entity.Questions)
+            {
+                this.Entry(question).Property("Position").CurrentValue = position++;
+            }
+        }
+
+        foreach (var entry in this.ChangeTracker.Entries<StudySession>()
+            .Where(e => e.State != EntityState.Deleted)
+            .ToList())
+        {
+            var position = 0;
+            foreach (var question in entry.Entity.Questions)
+            {
+                this.Entry(question).Property("Position").CurrentValue = position++;
+            }
+        }
+    }
+
 }
