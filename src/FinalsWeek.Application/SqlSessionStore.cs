@@ -10,7 +10,8 @@ public class SqlSessionStore(AppDbContext context) : ISessionStore
     public async Task<StudySession?> FindActiveAsync(Guid deckId)
     {
         return await context.StudySessions
-            .Include(s => s.Questions)
+            .Include(s => s.Questions.OrderBy(q => EF.Property<int>(q, "Position")))
+            .Include("answers")
             .FirstOrDefaultAsync(s => s.DeckId == deckId && s.FinishedAt == null);
     }
 
@@ -27,7 +28,8 @@ public class SqlSessionStore(AppDbContext context) : ISessionStore
     public async Task<StudySession?> FindAsync(Guid sessionId)
     {
         return await context.StudySessions
-            .Include(s => s.Questions)
+            .Include(s => s.Questions.OrderBy(q => EF.Property<int>(q, "Position")))
+            .Include("answers")
             .FirstOrDefaultAsync(s => s.Id == sessionId);
     }
 
@@ -41,7 +43,8 @@ public class SqlSessionStore(AppDbContext context) : ISessionStore
     public async Task<IReadOnlyList<StudySession>> GetFinishedAsync()
     {
         var finishedSessions = await context.StudySessions
-            .Include(s => s.Questions)
+            .Include(s => s.Questions.OrderBy(q => EF.Property<int>(q, "Position")))
+            .Include("answers")
             .Where(s => s.FinishedAt != null)
             .OrderByDescending(s => s.FinishedAt)
             .ToListAsync();

@@ -1,6 +1,7 @@
 namespace FinalsWeek.Core.Tests;
 
 using FinalsWeek.Core;
+using FinalsWeek.Core.Exceptions;
 using Xunit;
 
 public class LiveRoomTests

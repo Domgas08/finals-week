@@ -1,9 +1,9 @@
 @page "/decks/create"
 @rendermode InteractiveServer
-
+@attribute [Authorize]
 @using FinalsWeek.Core
 @using FinalsWeek.Application
-
+@inject CurrentUser CurrentUser
 @inject IDeckStore DeckStore
 @inject NavigationManager Navigation
 
@@ -52,6 +52,8 @@
     private string? error;
     private bool saving;
 
+    private string? userId;
+
     private async Task SubmitForm()
     {
         if (saving)
@@ -64,13 +66,16 @@
 
         try
         {
+            userId = await CurrentUser.GetIdAsync();
+
             var deck = new Deck(
                 form.Title,
                 courseCode: Normalise(form.CourseCode),
                 description: Normalise(form.Description),
                 visibility: form.Visibility);
 
-            await DeckStore.AddAsync(deck);
+            ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+            await DeckStore.AddAsync(deck, userId);
             Navigation.NavigateTo("/decks");
         }
         catch (ArgumentException ex)

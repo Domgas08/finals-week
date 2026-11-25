@@ -98,6 +98,9 @@ namespace FinalsWeek.Application.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<string>("OwnerId")
+                        .HasColumnType("text");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("text");
@@ -106,6 +109,8 @@ namespace FinalsWeek.Application.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
 
                     b.ToTable("Decks");
                 });
@@ -267,6 +272,11 @@ namespace FinalsWeek.Application.Migrations
 
             modelBuilder.Entity("FinalsWeek.Core.Deck", b =>
                 {
+                    b.HasOne("FinalsWeek.Application.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.OwnsMany("FinalsWeek.Core.Question", "Questions", b1 =>
                         {
                             b1.Property<Guid>("Id")
@@ -282,6 +292,9 @@ namespace FinalsWeek.Application.Migrations
                                 .IsRequired()
                                 .HasColumnType("text[]")
                                 .HasColumnName("Options");
+
+                            b1.Property<int>("Position")
+                                .HasColumnType("integer");
 
                             b1.Property<string>("Prompt")
                                 .IsRequired()
@@ -314,10 +327,7 @@ namespace FinalsWeek.Application.Migrations
                                 .HasColumnType("uuid");
 
                             b1.Property<int>("QuestionIndex")
-                                .ValueGeneratedOnAdd()
                                 .HasColumnType("integer");
-
-                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("QuestionIndex"));
 
                             b1.Property<int>("Outcome")
                                 .HasColumnType("integer");
@@ -348,6 +358,9 @@ namespace FinalsWeek.Application.Migrations
                                 .IsRequired()
                                 .HasColumnType("text[]")
                                 .HasColumnName("Options");
+
+                            b1.Property<int>("Position")
+                                .HasColumnType("integer");
 
                             b1.Property<string>("Prompt")
                                 .IsRequired()
