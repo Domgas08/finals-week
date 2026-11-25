@@ -1,8 +1,10 @@
 @page "/decks/{DeckId:guid}/import"
 @rendermode InteractiveServer
+@attribute [Authorize]
 @using FinalsWeek.Core
 @using FinalsWeek.Application
 @inject NavigationManager Navigation
+@inject CurrentUser CurrentUser
 @inject IDeckStore DeckStore
 @inject IEnumerable<IQuestionImporter> Importers
 @inject UploadGuard UploadGuard
@@ -13,7 +15,7 @@
 {
     <p>Loading deck...</p>
 }
-else if (deck is null)
+else if (deck is null || !deck.CanBeEdited(userId))
 {
     <h1>Deck not found</h1>
 }
@@ -119,10 +121,13 @@ else
     [Parameter]
     public Guid DeckId { get; set; }
 
+    private string? userId;
+
     protected override async Task OnParametersSetAsync()
     {
+        userId = await CurrentUser.GetIdAsync();
         isLoading = true;
-        deck = await DeckStore.GetByIdAsync(DeckId);
+        deck = await DeckStore.GetByIdAsync(DeckId, userId);
         isLoading = false;
     }
 
@@ -168,7 +173,8 @@ else
 
         try
         {
-            await DeckStore.AddQuestionsToDeckAsync(DeckId, result.Questions);
+            ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+            await DeckStore.AddQuestionsToDeckAsync(DeckId, result.Questions, userId);
             Navigation.NavigateTo($"/decks/{DeckId}");
         }
         catch (Exception ex)
