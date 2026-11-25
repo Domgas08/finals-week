@@ -41,6 +41,7 @@ else
         @if (HasQuestions)
         {
             <button class="btn btn-primary" @onclick="Study">Study</button>
+            <a class="ms-2" href="@($"/decks/{DeckId}/host")">Host live room</a>
         }
         else
         {
