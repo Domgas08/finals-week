@@ -7,7 +7,7 @@ using Xunit;
 public class JsonImporterTests
 {
     [Fact]
-    public void Import_ValidEntry_ReturnsQuestion()
+    public async Task Import_ValidEntry_ReturnsQuestion()
     {
         const string json = """
         [
@@ -25,7 +25,7 @@ public class JsonImporterTests
 
         var importer = new JsonImporter();
 
-        var result = importer.Import(stream);
+        var result = await importer.ImportAsync(stream);
 
         Assert.True(result.Success);
         Assert.Single(result.Questions);
@@ -36,7 +36,7 @@ public class JsonImporterTests
     }
 
     [Fact]
-    public void Import_BadEntry_ReportsFailure()
+    public async Task Import_BadEntry_ReportsFailure()
     {
         const string json = """
         [
@@ -48,7 +48,7 @@ public class JsonImporterTests
 
         var importer = new JsonImporter();
 
-        var result = importer.Import(stream);
+        var result = await importer.ImportAsync(stream);
 
         Assert.True(result.Success);
         Assert.Empty(result.Questions);
@@ -57,7 +57,7 @@ public class JsonImporterTests
     }
 
     [Fact]
-    public void Import_MixedEntries_ContinuesAfterBadEntry()
+    public async Task Import_MixedEntries_ContinuesAfterBadEntry()
     {
         const string json = """
         [
@@ -71,7 +71,7 @@ public class JsonImporterTests
 
         var importer = new JsonImporter();
 
-        var result = importer.Import(stream);
+        var result = await importer.ImportAsync(stream);
 
         Assert.True(result.Success);
         Assert.Equal(2, result.Questions.Count);
@@ -80,7 +80,7 @@ public class JsonImporterTests
     }
 
     [Fact]
-    public void Import_MalformedDocument_ReturnsFailure()
+    public async Task Import_MalformedDocument_ReturnsFailure()
     {
         const string json = """
         [ { "prompt": "Never closed"
@@ -90,20 +90,20 @@ public class JsonImporterTests
 
         var importer = new JsonImporter();
 
-        var result = importer.Import(stream);
+        var result = await importer.ImportAsync(stream);
 
         Assert.False(result.Success);
         Assert.Contains("Invalid JSON", result.FailureReason);
     }
 
     [Fact]
-    public void Import_RootIsNotArray_ReturnsFailure()
+    public async Task Import_RootIsNotArray_ReturnsFailure()
     {
         using var stream = CreateStream("{}");
 
         var importer = new JsonImporter();
 
-        var result = importer.Import(stream);
+        var result = await importer.ImportAsync(stream);
 
         Assert.False(result.Success);
         Assert.Contains("Invalid JSON", result.FailureReason);
