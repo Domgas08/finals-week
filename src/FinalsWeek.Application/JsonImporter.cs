@@ -12,56 +12,49 @@ public class JsonImporter : IQuestionImporter
 
     public string Extension => ".json";
 
-    public ImportResult Import(Stream stream)
+    private static async IAsyncEnumerable<NumberedRow<QuestionTransfer?>> ReadRowsAsync(IAsyncEnumerable<QuestionTransfer?> transfers)
+    {
+        var index = 0;
+        await foreach (var transfer in transfers)
+        {
+            index++;
+            yield return new NumberedRow<QuestionTransfer?>(index, transfer);
+        }
+    }
+
+    private static Question ToQuestion(QuestionTransfer? transfer)
+    {
+        if (transfer is null)
+        {
+            throw new ArgumentException("Entry is null.");
+        }
+
+        if (transfer.Prompt is null)
+        {
+            throw new ArgumentException("Prompt is missing.");
+        }
+
+        if (transfer.Options is null)
+        {
+            throw new ArgumentException("Options are missing.");
+        }
+
+        if (transfer.CorrectIndex is null)
+        {
+            throw new ArgumentException("CorrectIndex is missing.");
+        }
+
+        return new Question(transfer.Prompt, transfer.Options, transfer.CorrectIndex.Value, transfer.Topic, transfer.TimeLimitSeconds ?? 20);
+    }
+
+    public async Task<ImportResult> ImportAsync(Stream stream)
     {
         ArgumentNullException.ThrowIfNull(stream);
 
-        var questions = new List<Question>();
-        var failedRows = new List<ImportRowFailure>();
-
-        var index = 0;
         try
         {
-            var transfers = JsonSerializer.Deserialize<List<QuestionTransfer?>>(stream, JsonOptions);
-            foreach (var transfer in transfers ?? [])
-            {
-                ++index;
-
-                if (transfer is null)
-                {
-                    failedRows.Add(
-                        new ImportRowFailure(index, "Entry is null"));
-                    continue;
-                }
-
-                if (transfer.Prompt is null)
-                {
-                    failedRows.Add(new ImportRowFailure(index, "Prompt is missing."));
-                    continue;
-                }
-
-                if (transfer.Options is null)
-                {
-                    failedRows.Add(new ImportRowFailure(index, "Options are missing."));
-                    continue;
-                }
-
-                if (transfer.CorrectIndex is null)
-                {
-                    failedRows.Add(new ImportRowFailure(index, "CorrectIndex is missing."));
-                    continue;
-                }
-
-                try
-                {
-                    var question = new Question(transfer.Prompt, transfer.Options, transfer.CorrectIndex.Value, transfer.Topic, transfer.TimeLimitSeconds ?? 20);
-                    questions.Add(question);
-                }
-                catch (ArgumentException ex)
-                {
-                    failedRows.Add(new ImportRowFailure(index, ex.Message));
-                }
-            }
+            var transfer = JsonSerializer.DeserializeAsyncEnumerable<QuestionTransfer?>(stream, JsonOptions);
+            return await ImportPipeline.RunAsync(ReadRowsAsync(transfer), ToQuestion);
         }
         catch (JsonException ex)
         {
@@ -70,7 +63,5 @@ public class JsonImporter : IQuestionImporter
                 new List<ImportRowFailure>(),
                 $"Invalid JSON: {ex.Message}");
         }
-
-        return new ImportResult(questions, failedRows);
     }
 }
