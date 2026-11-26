@@ -1,0 +1,31 @@
+# 0002: Live rooms kept in memory
+
+## Status
+
+Accepted
+
+## Context
+
+A live room lets a host run a deck as a quiz for several players at the same time. The domain model already exists: `LiveRoom` in `FinalsWeek.Core` has a lobby, an in-progress and a finished state, a host token, and a list of players. What it does not have is a place to live. Every player and the host connect from their own browser, and Blazor Server gives each of them a separate circuit, so something shared has to hold all active rooms, let players find a room by its code, and tell every page when a room changes. We have to decide where that room state is kept and how changes reach the players' pages.
+
+## Decision
+
+- Keep all active rooms in memory in `RoomRegistry` (`FinalsWeek.Application`), a singleton registered in `Program.cs`. Rooms are stored in a `ConcurrentDictionary` keyed by a six character room code.
+- Room codes use an alphabet without look-alike characters (no `I`, `O`, `0` or `1`). The registry retries if a generated code is already taken.
+- `LiveRoom` itself is a plain object and is not thread safe. The registry gives each room its own lock and runs every join, start, next and end inside it, so two players cannot change the same room at the same time, while different rooms never wait for each other.
+- Share changes with an in-process .NET event, `RoomRegistry.RoomChanged`, which carries only the room code. A page that receives it reads a fresh `RoomSnapshot` with `GetSnapshot`.
+- The host proves who they are with a random host token returned by `CreateRoom`. The registry passes it to `LiveRoom`, which checks it on `Start`, `Next` and `End`.
+
+## Alternatives considered
+
+- **A SignalR hub:** would let us push messages to groups of players, but Blazor Server already keeps a SignalR connection open for every user. With a single server process an ordinary event reaches every page without a second connection, a hub class and group management on top.
+- **Room state in Postgres:** rooms would survive a restart, but a room is short-lived and changes on every join and every question. We would pay for a database write and a schema for data we are happy to lose, and the other players' pages would still need polling or `LISTEN/NOTIFY` to find out something changed.
+- **One global lock around all rooms:** the simplest way to make the registry safe, but one slow action in one room would make every other room wait. A lock per room keeps rooms independent at almost no extra cost.
+
+## Consequences
+
+- Rooms are lost whenever the app restarts, including every redeploy. Players in a running game have to start a new room.
+- The app can only run as one server. A second instance would have its own empty registry, so a player could not find a room created on the other one.
+- Pages must unsubscribe from `RoomChanged` when they are disposed. The registry is a singleton and keeps a reference to every handler, so a page that forgets to unsubscribe stays in memory after the user leaves and keeps reacting to events.
+- The event is raised on the thread of whoever changed the room, not on the page's own thread. A handler has to hop back to the component's context (for example `InvokeAsync(StateHasChanged)`) before touching the UI.
+- Rooms are never removed from the registry, even after they finish, so memory use grows until the app restarts. Cleaning up finished rooms is a follow-up we have not done.
