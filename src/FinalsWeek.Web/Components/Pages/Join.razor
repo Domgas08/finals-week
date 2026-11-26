@@ -13,7 +13,13 @@
 @if (!string.IsNullOrWhiteSpace(errorMessage))
 {
     <div class="alert alert-danger" role="alert">
-        @errorMessage
+        <div>@errorMessage</div>
+        @if (showLink)
+        {
+            <div class="mt-2">
+                <a href="/" class="alert-link">Back to home</a>
+            </div>
+        }
     </div>
 }
 
@@ -68,6 +74,7 @@ else
     private string roomCode = string.Empty;
     private string playerName = string.Empty;
     private string? errorMessage;
+    private bool showLink;
     private RoomPlayer? joinedPlayer;
     private RoomSnapshot? snapshot;
     private string? subscribedCode;
@@ -76,6 +83,7 @@ else
     private void JoinRoom()
     {
         errorMessage = null;
+        showLink = false;
 
         var code = roomCode.Trim();
         var name = playerName.Trim();
@@ -104,11 +112,12 @@ else
         }
         catch (RoomNotFoundException)
         {
+            roomCode = string.Empty;
             errorMessage = "No such room.";
         }
-        catch (RoomFullException)
+        catch (RoomFullException ex)
         {
-            errorMessage = "Room is full.";
+            errorMessage = $"Room is full ({ex.MaxPlayers} players).";
         }
         catch (RoomAlreadyStartedException)
         {
@@ -117,6 +126,11 @@ else
         catch (RoomAlreadyFinishedException)
         {
             errorMessage = "Room already finished.";
+            showLink = true;
+        }
+        catch (RoomException ex)
+        {
+            errorMessage = ex.Message;
         }
     }
 
