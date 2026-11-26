@@ -1,0 +1,143 @@
+@page "/decks/{DeckId:guid}/host"
+@rendermode InteractiveServer
+@attribute [Authorize]
+@implements IDisposable
+@using FinalsWeek.Application
+@using FinalsWeek.Core
+@using FinalsWeek.Core.Exceptions
+@inject IDeckStore DeckStore
+@inject CurrentUser CurrentUser
+@inject RoomRegistry RoomRegistry
+
+<PageTitle>Host room</PageTitle>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else if (deck is null)
+{
+    <p>Deck not found.</p>
+    <a href="/decks">Back to decks</a>
+}
+else if (room is null || snapshot is null)
+{
+    <h1>Host: @deck.Title</h1>
+
+    <div class="mb-3">
+        <label class="form-label">Max players</label>
+        <input type="number" class="form-control" min="1" @bind="maxPlayers" />
+    </div>
+
+    <button class="btn btn-primary" @onclick="CreateRoom">Create room</button>
+}
+else
+{
+    <h1>Room code: @room.Code</h1>
+    <p>State: @snapshot.State</p>
+
+    @if (snapshot.State == RoomState.InProgress && snapshot.CurrentQuestion is not null)
+    {
+        <p>Question @(snapshot.CurrentQuestionIndex + 1) of @snapshot.QuestionCount</p>
+        <h2>@snapshot.CurrentQuestion.Prompt</h2>
+    }
+
+    <h3>Players (@snapshot.Players.Count)</h3>
+    <ul>
+        @foreach (var player in snapshot.Players)
+        {
+            <li>@player.DisplayName</li>
+        }
+    </ul>
+
+    <button class="btn btn-success" disabled="@(snapshot.State != RoomState.Lobby)" @onclick="Start">Start</button>
+    <button class="btn btn-primary ms-2" disabled="@(snapshot.State != RoomState.InProgress)" @onclick="Next">Next</button>
+    <button class="btn btn-danger ms-2" disabled="@(snapshot.State == RoomState.Finished)" @onclick="End">End</button>
+}
+
+@if (errorMessage is not null)
+{
+    <div class="alert alert-danger mt-3">@errorMessage</div>
+}
+
+@code {
+    [Parameter]
+    public Guid DeckId { get; set; }
+
+    private bool isLoading = true;
+    private Deck? deck;
+    private CreatedRoom? room;
+    private RoomSnapshot? snapshot;
+    private int maxPlayers = 10;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userId = await CurrentUser.GetIdAsync();
+        var found = await DeckStore.GetByIdAsync(DeckId, userId);
+        deck = found;
+        isLoading = false;
+    }
+
+    private void CreateRoom()
+    {
+        errorMessage = null;
+
+        try
+        {
+            var settings = new RoomSettings(
+                TimeLimitSeconds: 20,
+                Shuffle: false,
+                AllowLateJoin: false,
+                MaxPlayers: maxPlayers);
+
+            room = RoomRegistry.CreateRoom(deck!, settings);
+            snapshot = RoomRegistry.GetSnapshot(room.Code);
+            RoomRegistry.RoomChanged += OnRoomChanged;
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private void Start() => Run(() => RoomRegistry.Start(room!.Code, room.HostToken));
+
+    private void Next() => Run(() => RoomRegistry.Next(room!.Code, room.HostToken));
+
+    private void End() => Run(() => RoomRegistry.End(room!.Code, room.HostToken));
+
+    private void Run(Action action)
+    {
+        errorMessage = null;
+
+        try
+        {
+            action();
+            snapshot = RoomRegistry.GetSnapshot(room!.Code);
+        }
+        catch (RoomException ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private void OnRoomChanged(string code)
+    {
+        if (room is null || code != room.Code)
+        {
+            return;
+        }
+
+        _ = InvokeAsync(() =>
+        {
+            snapshot = RoomRegistry.GetSnapshot(room.Code);
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        RoomRegistry.RoomChanged -= OnRoomChanged;
+    }
+}
